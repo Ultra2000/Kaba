@@ -25,6 +25,49 @@ class HomeController extends Controller
                 ->orderByDesc('views')
                 ->take(4)
                 ->get(),
+            'shelves' => $this->shelves(),
         ]);
+    }
+
+    /** Étagères par catégorie (label + livres) pour la disposition « bibliothèque ». */
+    private function shelves(): array
+    {
+        // slug => description courte
+        $wanted = [
+            'roman'     => 'Plongez dans des histoires captivantes.',
+            'dev-perso' => 'Des livres pour grandir et s’épanouir.',
+            'scolaire'  => 'Manuels et annales pour réussir.',
+            'histoire'  => 'Comprendre le monde qui nous entoure.',
+        ];
+
+        $categories = Category::whereIn('slug', array_keys($wanted))->get()->keyBy('slug');
+        $shelves = [];
+
+        foreach ($wanted as $slug => $description) {
+            $cat = $categories->get($slug);
+            if (! $cat) {
+                continue;
+            }
+            $books = Listing::with('photos')
+                ->where('category_id', $cat->id)
+                ->where('status', 'active')
+                ->orderByDesc('views')
+                ->take(12)
+                ->get();
+
+            if ($books->isEmpty()) {
+                continue;
+            }
+
+            $shelves[] = [
+                'title'       => $cat->name,
+                'slug'        => $cat->slug,
+                'icon'        => $cat->icon,
+                'description' => $description,
+                'books'       => $books,
+            ];
+        }
+
+        return $shelves;
     }
 }

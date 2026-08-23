@@ -3,11 +3,13 @@ import { reactive } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import PublicLayout from '@/Layouts/PublicLayout.vue';
 import BookCard from '@/Components/BookCard.vue';
+import CategoryShelf from '@/Components/CategoryShelf.vue';
 
 defineProps({
     featured: Array,
     categories: Array,
     topRomans: { type: Array, default: () => [] },
+    shelves: { type: Array, default: () => [] },
 });
 
 // Image d'une catégorie : override en base, sinon convention /images/categories/{slug}.jpg
@@ -186,6 +188,22 @@ const romanPrice = (l) => {
                         </Link>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- Disposition en étagères par catégorie -->
+        <section v-if="shelves.length" class="max-w-[1400px] mx-auto px-4 mt-24">
+            <div class="text-center mb-12">
+                <p class="text-brand-600 font-bold text-sm uppercase tracking-wider mb-1">Notre bibliothèque</p>
+                <h2 class="text-2xl md:text-3xl font-black text-dark">Parcourez par catégorie</h2>
+            </div>
+            <div class="space-y-16">
+                <CategoryShelf v-for="s in shelves" :key="s.slug"
+                               :title="s.title"
+                               :description="s.description"
+                               :icon="s.icon"
+                               :href="`/explorer?category=${s.slug}`"
+                               :books="s.books" />
             </div>
         </section>
 
