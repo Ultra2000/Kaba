@@ -41,23 +41,35 @@ function onErr(e, l) { e.target.onerror = null; e.target.src = placeholder(l); }
 
         <!-- Étagère -->
         <div class="relative flex-1 min-w-0 w-full">
-            <!-- Rangée de livres (défilante) -->
+            <!-- Rangée de livres (défilante, avec perspective 3D) -->
             <div ref="scroller"
-                 class="flex items-end gap-5 md:gap-6 overflow-x-auto pr-14 snap-x scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                 class="flex items-end gap-6 md:gap-7 overflow-x-auto overflow-y-hidden pr-14 pt-6 snap-x scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 <Link v-for="b in books" :key="b.id" :href="`/livres/${b.id}`"
-                      class="group/book shrink-0 snap-start block">
-                    <img :src="cover(b)" @error="onErr($event, b)" :alt="b.title" loading="lazy"
-                         class="h-44 md:h-52 w-auto object-contain rounded-[3px] bg-white
-                                shadow-[0_10px_18px_-6px_rgba(0,0,0,0.4)]
-                                group-hover/book:-translate-y-2 group-hover/book:shadow-[0_18px_28px_-8px_rgba(0,0,0,0.5)]
-                                transition-all duration-300 origin-bottom">
+                      class="group/book shrink-0 snap-start relative block origin-bottom transition-transform duration-300 ease-out hover:-translate-y-2.5">
+                    <!-- Ombre de contact sur l'étagère -->
+                    <div class="absolute inset-x-1 -bottom-1 h-2.5 bg-black/40 blur-md rounded-[50%]
+                                transition-all duration-300 group-hover/book:inset-x-0 group-hover/book:bg-black/30 group-hover/book:blur-lg"></div>
+                    <!-- Livre : couverture + tranche de pages (épaisseur) -->
+                    <div class="relative rounded-[3px] overflow-hidden shadow-[0_10px_18px_-6px_rgba(0,0,0,0.45)]
+                                border-r-[3px] border-r-[#e6ddca] group-hover/book:shadow-[0_20px_30px_-8px_rgba(0,0,0,0.5)] transition-shadow duration-300">
+                        <img :src="cover(b)" @error="onErr($event, b)" :alt="b.title" loading="lazy"
+                             class="h-44 md:h-52 w-auto object-contain bg-white block">
+                        <!-- Reliure (bord gauche, léger creux) -->
+                        <div class="absolute inset-y-0 left-0 w-2.5 bg-gradient-to-r from-black/35 via-black/10 to-transparent"></div>
+                        <!-- Reflet lumineux -->
+                        <div class="absolute inset-y-0 left-2.5 w-[3px] bg-white/25"></div>
+                    </div>
                 </Link>
                 <div v-if="!books.length" class="text-gray-400 text-sm py-16">Bientôt des livres ici.</div>
             </div>
 
-            <!-- Planche en bois -->
-            <div class="h-3 rounded-[2px] bg-gradient-to-b from-[#d3a978] via-[#b07f4a] to-[#7c5423] shadow-[0_12px_16px_-8px_rgba(0,0,0,0.45)]"></div>
-            <div class="h-4 mx-6 bg-gradient-to-b from-black/12 to-transparent rounded-b-full"></div>
+            <!-- Planche en bois (texture) + épaisseur 3D -->
+            <div class="relative">
+                <div class="h-3.5 bg-repeat-x rounded-t-[2px]"
+                     style="background-image:url('/images/wood-shelf.svg'); background-size:auto 100%"></div>
+                <div class="h-2.5 bg-gradient-to-b from-[#5e3a1b] to-[#3a2210]"></div>
+                <div class="h-5 mx-8 bg-gradient-to-b from-black/25 to-transparent rounded-[50%] blur-[2px]"></div>
+            </div>
 
             <!-- Flèche de défilement -->
             <button v-if="books.length > 3" type="button" @click="next"
