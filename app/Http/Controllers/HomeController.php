@@ -23,7 +23,7 @@ class HomeController extends Controller
                 ->where('status', 'active')
                 ->orderByDesc('rating')
                 ->orderByDesc('views')
-                ->take(3)
+                ->take(4)
                 ->get(),
         ]);
     }

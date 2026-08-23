@@ -30,7 +30,7 @@ const coverStage = reactive({});
 const currentCover = (l) => coverCandidates(l)[coverStage[l.id] ?? 0] ?? null;
 const onCoverError = (l) => { coverStage[l.id] = (coverStage[l.id] ?? 0) + 1; };
 
-// Palette d'accents (3 cards, style immersif façon référence).
+// Palette d'accents (style immersif façon référence).
 const romanAccents = [
     { grad: 'from-brand-700 to-brand-900', badge: 'bg-brand-600', check: 'text-brand-300', link: 'text-brand-200 border-brand-300', icon: 'fa-crown' },
     { grad: 'from-orange-700 to-orange-900', badge: 'bg-orange-500', check: 'text-orange-300', link: 'text-orange-200 border-orange-300', icon: 'fa-fire' },
@@ -38,10 +38,10 @@ const romanAccents = [
 ];
 
 const romanPrice = (l) => {
-    if (l.type === 'don') return 'Don gratuit';
-    if (l.type === 'echange') return 'Ouvert à l\'échange';
+    if (l.type === 'don') return 'Gratuit';
+    if (l.type === 'echange') return 'Échange';
     if (l.type === 'recherche') return 'Recherché';
-    return new Intl.NumberFormat('fr-FR').format(l.price) + ' FCFA';
+    return new Intl.NumberFormat('fr-FR').format(l.price) + ' F';
 };
 </script>
 
@@ -151,34 +151,30 @@ const romanPrice = (l) => {
                 <Link href="/explorer?category=roman" class="text-sm font-bold text-gray-500 hover:text-brand-600 shrink-0">Tous les romans →</Link>
             </div>
 
-            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
                 <div v-for="(r, i) in topRomans" :key="r.id"
-                     class="group relative rounded-2xl overflow-hidden h-[280px] flex flex-col shadow-floating">
+                     class="group relative rounded-2xl overflow-hidden aspect-[2/3] flex flex-col shadow-floating">
                     <!-- Fond : couverture → ISBN → photo de catégorie → dégradé d'accent -->
                     <img v-if="currentCover(r)" :src="currentCover(r)" :alt="r.title" loading="lazy"
                          @error="onCoverError(r)"
                          class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     <div v-else class="absolute inset-0 bg-gradient-to-br" :class="romanAccents[i % 3].grad"></div>
                     <!-- Voile sombre pour la lisibilité -->
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/20"></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/15"></div>
 
                     <!-- Contenu -->
-                    <div class="relative z-10 flex flex-col h-full p-5">
-                        <div class="w-11 h-11 rounded-xl flex items-center justify-center text-white text-base shadow-lg" :class="romanAccents[i % 3].badge">
+                    <div class="relative z-10 flex flex-col h-full p-4">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm shadow-lg" :class="romanAccents[i % 3].badge">
                             <i class="fa-solid" :class="romanAccents[i % 3].icon"></i>
                         </div>
 
                         <div class="mt-auto">
-                            <h3 class="text-lg font-black text-white leading-tight mb-1 line-clamp-1">{{ r.title }}</h3>
-                            <p class="text-white/70 text-xs font-medium mb-3">{{ r.author }} · {{ r.city }}</p>
+                            <h3 class="text-base font-black text-white leading-tight mb-1 line-clamp-2">{{ r.title }}</h3>
+                            <p class="text-white/70 text-xs font-medium mb-2.5 truncate">{{ r.author }}</p>
 
-                            <div class="flex items-center gap-3 mb-4 text-white text-xs font-medium">
-                                <span class="flex items-center gap-1.5">
-                                    <i class="fa-solid fa-circle-check" :class="romanAccents[i % 3].check"></i>{{ r.condition_label ?? 'Bon état' }}
-                                </span>
-                                <span class="flex items-center gap-1.5">
-                                    <i class="fa-solid fa-circle-check" :class="romanAccents[i % 3].check"></i>{{ romanPrice(r) }}
-                                </span>
+                            <div class="flex items-center gap-1.5 text-white text-xs font-medium mb-3">
+                                <i class="fa-solid fa-circle-check" :class="romanAccents[i % 3].check"></i>{{ r.condition_label ?? 'Bon état' }}
+                                <span class="text-white/40">·</span>{{ romanPrice(r) }}
                             </div>
 
                             <Link :href="`/livres/${r.id}`"
