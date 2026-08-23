@@ -1,0 +1,5 @@
+@extends('errors.layout')
+@section('code', '503')
+@section('icon', 'fa-screwdriver-wrench')
+@section('title', 'Maintenance en cours')
+@section('message', "KABA se refait une beauté. Nous revenons très vite avec de nouveaux livres à découvrir. Merci de votre patience !")

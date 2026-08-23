@@ -1,0 +1,5 @@
+@extends('errors.layout')
+@section('code', '403')
+@section('icon', 'fa-lock')
+@section('title', 'Accès non autorisé')
+@section('message', "Vous n'avez pas les droits nécessaires pour accéder à cette page. Si vous pensez que c'est une erreur, contactez le support KABA.")

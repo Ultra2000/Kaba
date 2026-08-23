@@ -1,0 +1,5 @@
+@extends('errors.layout')
+@section('code', '404')
+@section('icon', 'fa-book-open')
+@section('title', 'Cette page a disparu des rayons')
+@section('message', "La page ou l'annonce que vous cherchez n'existe plus ou a été déplacée. Elle a peut-être déjà trouvé preneur !")
