@@ -30,11 +30,11 @@ const coverStage = reactive({});
 const currentCover = (l) => coverCandidates(l)[coverStage[l.id] ?? 0] ?? null;
 const onCoverError = (l) => { coverStage[l.id] = (coverStage[l.id] ?? 0) + 1; };
 
-// Palette d'accents (style immersif façon référence).
+// Palette d'accents par card (badge coloré + accents texte sur fond blanc).
 const romanAccents = [
-    { grad: 'from-brand-700 to-brand-900', badge: 'bg-brand-600', check: 'text-brand-300', link: 'text-brand-200 border-brand-300', icon: 'fa-crown' },
-    { grad: 'from-orange-700 to-orange-900', badge: 'bg-orange-500', check: 'text-orange-300', link: 'text-orange-200 border-orange-300', icon: 'fa-fire' },
-    { grad: 'from-sky-700 to-sky-900', badge: 'bg-sky-600', check: 'text-sky-300', link: 'text-sky-200 border-sky-300', icon: 'fa-star' },
+    { grad: 'from-brand-500 to-brand-700', badge: 'bg-brand-600', accent: 'text-brand-600', icon: 'fa-crown' },
+    { grad: 'from-orange-500 to-orange-700', badge: 'bg-orange-500', accent: 'text-orange-600', icon: 'fa-fire' },
+    { grad: 'from-sky-500 to-sky-700', badge: 'bg-sky-600', accent: 'text-sky-600', icon: 'fa-star' },
 ];
 
 const romanPrice = (l) => {
@@ -153,35 +153,37 @@ const romanPrice = (l) => {
 
             <div class="flex flex-wrap gap-5">
                 <div v-for="(r, i) in topRomans" :key="r.id"
-                     class="group relative rounded-2xl overflow-hidden aspect-[3/4] w-[calc(50%-0.625rem)] sm:w-[300px] flex flex-col shadow-floating">
-                    <!-- Fond : couverture → ISBN → photo de catégorie → dégradé d'accent -->
-                    <img v-if="currentCover(r)" :src="currentCover(r)" :alt="r.title" loading="lazy"
-                         @error="onCoverError(r)"
-                         class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    <div v-else class="absolute inset-0 bg-gradient-to-br" :class="romanAccents[i % 3].grad"></div>
-                    <!-- Voile sombre pour la lisibilité -->
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/15"></div>
+                     class="group w-[calc(50%-0.625rem)] sm:w-[240px] rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-floating flex flex-col">
+                    <!-- Couverture entière (fond flou de la même image pour combler proprement) -->
+                    <div class="relative aspect-[3/4] overflow-hidden">
+                        <template v-if="currentCover(r)">
+                            <img :src="currentCover(r)" aria-hidden="true"
+                                 class="absolute inset-0 w-full h-full object-cover blur-2xl scale-125 opacity-50">
+                            <img :src="currentCover(r)" :alt="r.title" loading="lazy" @error="onCoverError(r)"
+                                 class="relative z-10 w-full h-full object-contain p-4 drop-shadow-[0_10px_20px_rgba(0,0,0,0.35)] group-hover:scale-105 transition-transform duration-300">
+                        </template>
+                        <div v-else class="absolute inset-0 bg-gradient-to-br" :class="romanAccents[i % 3].grad"></div>
 
-                    <!-- Contenu -->
-                    <div class="relative z-10 flex flex-col h-full p-4">
-                        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm shadow-lg" :class="romanAccents[i % 3].badge">
+                        <!-- Badge d'accent -->
+                        <div class="absolute top-3 left-3 z-20 w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm shadow-lg" :class="romanAccents[i % 3].badge">
                             <i class="fa-solid" :class="romanAccents[i % 3].icon"></i>
                         </div>
+                    </div>
 
-                        <div class="mt-auto">
-                            <h3 class="text-base font-black text-white leading-tight mb-1 line-clamp-2">{{ r.title }}</h3>
-                            <p class="text-white/70 text-xs font-medium mb-2.5 truncate">{{ r.author }}</p>
+                    <!-- Panneau texte -->
+                    <div class="p-4 flex flex-col flex-1">
+                        <h3 class="font-black text-dark text-base leading-tight line-clamp-1">{{ r.title }}</h3>
+                        <p class="text-gray-400 text-xs mt-0.5 truncate">{{ r.author }}</p>
 
-                            <div class="flex items-center gap-1.5 text-white text-xs font-medium mb-3">
-                                <i class="fa-solid fa-circle-check" :class="romanAccents[i % 3].check"></i>{{ r.condition_label ?? 'Bon état' }}
-                                <span class="text-white/40">·</span>{{ romanPrice(r) }}
-                            </div>
-
-                            <Link :href="`/livres/${r.id}`"
-                                  class="inline-flex items-center gap-2 font-bold text-sm pb-0.5 border-b-2 transition-colors" :class="romanAccents[i % 3].link">
-                                Voir le livre <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
-                            </Link>
+                        <div class="flex items-center gap-1.5 text-gray-600 text-xs font-medium mt-2">
+                            <i class="fa-solid fa-circle-check" :class="romanAccents[i % 3].accent"></i>{{ r.condition_label ?? 'Bon état' }}
+                            <span class="text-gray-300">·</span><span class="font-bold text-dark">{{ romanPrice(r) }}</span>
                         </div>
+
+                        <Link :href="`/livres/${r.id}`"
+                              class="mt-3 inline-flex items-center gap-2 font-bold text-sm hover:gap-3 transition-all" :class="romanAccents[i % 3].accent">
+                            Voir le livre <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                        </Link>
                     </div>
                 </div>
             </div>
