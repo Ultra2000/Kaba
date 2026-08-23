@@ -74,27 +74,31 @@ defineProps({
             </div>
         </section>
 
-        <!-- Catégories -->
-        <section class="max-w-[1400px] mx-auto px-4 mt-6">
-            <h2 class="text-2xl md:text-3xl font-black text-dark mb-6">Explorer par catégorie</h2>
-            <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 md:gap-4">
-                <Link v-for="c in categories" :key="c.slug" :href="`/explorer?category=${c.slug}`" class="flex flex-col items-center gap-3 group">
-                    <div class="w-full aspect-square bg-white rounded-2xl shadow-soft border border-gray-100 flex items-center justify-center group-hover:border-brand-300 group-hover:shadow-lg transition-all group-hover:-translate-y-1">
-                        <i class="fa-solid text-3xl md:text-4xl text-gray-300 group-hover:text-brand-500 transition-colors" :class="c.icon"></i>
-                    </div>
-                    <span class="font-semibold text-dark text-xs md:text-sm group-hover:text-brand-600 transition-colors text-center leading-tight">{{ c.name }}</span>
-                </Link>
-            </div>
-        </section>
-
         <!-- Recommandés -->
-        <section class="max-w-[1400px] mx-auto px-4 mt-16">
+        <section class="max-w-[1400px] mx-auto px-4 mt-10">
             <div class="flex items-end justify-between border-b border-gray-200 pb-4 mb-8">
                 <h2 class="text-2xl md:text-3xl font-black text-dark">Les best-sellers</h2>
                 <Link href="/explorer" class="text-sm font-bold text-gray-500 hover:text-brand-600 shrink-0">Plus de livres →</Link>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-5 gap-y-10 md:gap-x-8">
                 <BookCard v-for="l in featured" :key="l.id" :listing="l" />
+            </div>
+        </section>
+
+        <!-- Catégories (une seule ligne défilante) -->
+        <section class="max-w-[1400px] mx-auto px-4 mt-16">
+            <div class="flex items-end justify-between mb-6">
+                <h2 class="text-2xl md:text-3xl font-black text-dark">Explorer par catégorie</h2>
+                <Link href="/explorer" class="text-sm font-bold text-gray-500 hover:text-brand-600 shrink-0">Voir tout →</Link>
+            </div>
+            <div class="flex gap-3 md:gap-4 overflow-x-auto pb-3 -mx-4 px-4 snap-x scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                <Link v-for="c in categories" :key="c.slug" :href="`/explorer?category=${c.slug}`"
+                      class="shrink-0 snap-start w-24 md:w-28 flex flex-col items-center gap-2.5 group">
+                    <div class="w-full aspect-square bg-white rounded-2xl shadow-soft border border-gray-100 flex items-center justify-center group-hover:border-brand-300 group-hover:shadow-lg transition-all group-hover:-translate-y-1">
+                        <i class="fa-solid text-2xl md:text-3xl text-gray-300 group-hover:text-brand-500 transition-colors" :class="c.icon"></i>
+                    </div>
+                    <span class="font-semibold text-dark text-xs md:text-sm group-hover:text-brand-600 transition-colors text-center leading-tight">{{ c.name }}</span>
+                </Link>
             </div>
         </section>
 
