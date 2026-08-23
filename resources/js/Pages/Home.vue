@@ -7,6 +7,7 @@ import BookCard from '@/Components/BookCard.vue';
 defineProps({
     featured: Array,
     categories: Array,
+    topRomans: { type: Array, default: () => [] },
 });
 
 // Image d'une catégorie : override en base, sinon convention /images/categories/{slug}.jpg
@@ -14,6 +15,26 @@ const catImage = (c) => c.image ? c.image : `/images/categories/${c.slug}.jpg`;
 // Slugs dont l'image a échoué → on retombe sur l'icône.
 const failedImages = reactive(new Set());
 const onImageError = (slug) => failedImages.add(slug);
+
+// Couverture d'un livre pour le fond des cards « Meilleurs romans ».
+const bookCover = (l) => l.cover_url
+    || (l.isbn ? `https://covers.openlibrary.org/b/isbn/${l.isbn}-L.jpg` : null);
+
+// Palette d'accents (3 cards, style immersif façon référence).
+const romanAccents = [
+    { grad: 'from-brand-700 to-brand-900', badge: 'bg-brand-600', check: 'text-brand-300', link: 'text-brand-200 border-brand-300', icon: 'fa-crown' },
+    { grad: 'from-orange-700 to-orange-900', badge: 'bg-orange-500', check: 'text-orange-300', link: 'text-orange-200 border-orange-300', icon: 'fa-fire' },
+    { grad: 'from-sky-700 to-sky-900', badge: 'bg-sky-600', check: 'text-sky-300', link: 'text-sky-200 border-sky-300', icon: 'fa-star' },
+];
+
+const romanPrice = (l) => {
+    if (l.type === 'don') return 'Don gratuit';
+    if (l.type === 'echange') return 'Ouvert à l\'échange';
+    if (l.type === 'recherche') return 'Recherché';
+    return new Intl.NumberFormat('fr-FR').format(l.price) + ' FCFA';
+};
+const failedCovers = reactive(new Set());
+const onCoverError = (id) => failedCovers.add(id);
 </script>
 
 <template>
@@ -109,6 +130,58 @@ const onImageError = (slug) => failedImages.add(slug);
                     </div>
                     <span class="font-semibold text-dark text-xs md:text-sm group-hover:text-brand-600 transition-colors text-center leading-tight">{{ c.name }}</span>
                 </Link>
+            </div>
+        </section>
+
+        <!-- Meilleurs romans (style immersif) -->
+        <section v-if="topRomans.length" class="max-w-[1400px] mx-auto px-4 mt-20">
+            <div class="flex items-end justify-between mb-8">
+                <div>
+                    <p class="text-brand-600 font-bold text-sm uppercase tracking-wider mb-1">À ne pas manquer</p>
+                    <h2 class="text-2xl md:text-3xl font-black text-dark">Les meilleurs romans</h2>
+                </div>
+                <Link href="/explorer?category=roman" class="text-sm font-bold text-gray-500 hover:text-brand-600 shrink-0">Tous les romans →</Link>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <div v-for="(r, i) in topRomans" :key="r.id"
+                     class="group relative rounded-3xl overflow-hidden min-h-[440px] flex flex-col shadow-floating">
+                    <!-- Fond : couverture assombrie, sinon dégradé d'accent -->
+                    <img v-if="bookCover(r) && !failedCovers.has(r.id)" :src="bookCover(r)" :alt="r.title" loading="lazy"
+                         @error="onCoverError(r.id)"
+                         class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    <div v-else class="absolute inset-0 bg-gradient-to-br" :class="romanAccents[i % 3].grad"></div>
+                    <!-- Voile sombre pour la lisibilité -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/25"></div>
+
+                    <!-- Contenu -->
+                    <div class="relative z-10 flex flex-col h-full p-7">
+                        <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg" :class="romanAccents[i % 3].badge">
+                            <i class="fa-solid" :class="romanAccents[i % 3].icon"></i>
+                        </div>
+
+                        <div class="mt-auto">
+                            <h3 class="text-2xl font-black text-white leading-tight mb-2">{{ r.title }}</h3>
+                            <p class="text-white/75 text-sm font-medium mb-5">{{ r.author }} — disponible à {{ r.city }}.</p>
+
+                            <ul class="space-y-2.5 mb-6">
+                                <li class="flex items-center gap-2.5 text-white text-sm font-medium">
+                                    <i class="fa-solid fa-circle-check" :class="romanAccents[i % 3].check"></i>
+                                    {{ r.condition_label ?? 'Bon état' }}
+                                </li>
+                                <li class="flex items-center gap-2.5 text-white text-sm font-medium">
+                                    <i class="fa-solid fa-circle-check" :class="romanAccents[i % 3].check"></i>
+                                    {{ romanPrice(r) }}
+                                </li>
+                            </ul>
+
+                            <Link :href="`/livres/${r.id}`"
+                                  class="inline-flex items-center gap-2 font-bold text-sm pb-1 border-b-2 transition-colors" :class="romanAccents[i % 3].link">
+                                Voir le livre <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 

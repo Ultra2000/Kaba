@@ -18,6 +18,13 @@ class HomeController extends Controller
                 ->take(10)
                 ->get(),
             'categories' => Category::orderBy('name')->get(['id', 'name', 'slug', 'icon', 'image']),
+            'topRomans' => Listing::with(['photos'])
+                ->whereHas('category', fn ($q) => $q->where('slug', 'roman'))
+                ->where('status', 'active')
+                ->orderByDesc('rating')
+                ->orderByDesc('views')
+                ->take(3)
+                ->get(),
         ]);
     }
 }
