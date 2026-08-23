@@ -1,4 +1,5 @@
 <script setup>
+import { reactive } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import PublicLayout from '@/Layouts/PublicLayout.vue';
 import BookCard from '@/Components/BookCard.vue';
@@ -7,6 +8,12 @@ defineProps({
     featured: Array,
     categories: Array,
 });
+
+// Image d'une catégorie : override en base, sinon convention /images/categories/{slug}.jpg
+const catImage = (c) => c.image ? c.image : `/images/categories/${c.slug}.jpg`;
+// Slugs dont l'image a échoué → on retombe sur l'icône.
+const failedImages = reactive(new Set());
+const onImageError = (slug) => failedImages.add(slug);
 </script>
 
 <template>
@@ -94,8 +101,11 @@ defineProps({
             <div class="flex gap-3 md:gap-4 overflow-x-auto pb-3 -mx-4 px-4 snap-x scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 <Link v-for="c in categories" :key="c.slug" :href="`/explorer?category=${c.slug}`"
                       class="shrink-0 snap-start w-24 md:w-28 flex flex-col items-center gap-2.5 group">
-                    <div class="w-full aspect-square bg-white rounded-2xl shadow-soft border border-gray-100 flex items-center justify-center group-hover:border-brand-300 group-hover:shadow-lg transition-all group-hover:-translate-y-1">
-                        <i class="fa-solid text-2xl md:text-3xl text-gray-300 group-hover:text-brand-500 transition-colors" :class="c.icon"></i>
+                    <div class="w-full aspect-square bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden flex items-center justify-center group-hover:border-brand-300 group-hover:shadow-lg transition-all group-hover:-translate-y-1">
+                        <img v-if="!failedImages.has(c.slug)" :src="catImage(c)" :alt="c.name" loading="lazy"
+                             @error="onImageError(c.slug)"
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        <i v-else class="fa-solid text-2xl md:text-3xl text-gray-300 group-hover:text-brand-500 transition-colors" :class="c.icon"></i>
                     </div>
                     <span class="font-semibold text-dark text-xs md:text-sm group-hover:text-brand-600 transition-colors text-center leading-tight">{{ c.name }}</span>
                 </Link>

@@ -17,7 +17,7 @@ class HomeController extends Controller
                 ->orderByDesc('views')
                 ->take(10)
                 ->get(),
-            'categories' => Category::orderBy('name')->get(['id', 'name', 'slug', 'icon']),
+            'categories' => Category::orderBy('name')->get(['id', 'name', 'slug', 'icon', 'image']),
         ]);
     }
 }

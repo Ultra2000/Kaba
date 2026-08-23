@@ -1,0 +1,33 @@
+PHOTOS DES CATÉGORIES — mode d'emploi
+=====================================
+
+Déposez ici une photo par catégorie, au format JPG, nommée EXACTEMENT
+comme le "slug" de la catégorie (voir la liste ci-dessous).
+
+  Exemple :  roman.jpg   manga.jpg   cuisine.jpg …
+
+- Format recommandé : JPG, carré (ex. 400 x 400 px), < 300 Ko.
+- Si une photo manque, l'icône FontAwesome s'affiche automatiquement à la place.
+- Pour utiliser un autre nom/emplacement, renseignez la colonne "image" de la
+  catégorie en base (chemin ou URL) : elle est prioritaire sur la convention.
+
+Fichiers attendus (18 catégories) :
+------------------------------------
+  roman.jpg            → Romans
+  manga.jpg            → Mangas
+  bd.jpg               → Bandes dessinées
+  scolaire.jpg         → Scolaires
+  universitaire.jpg    → Universitaires
+  dev-perso.jpg        → Développement personnel
+  economie.jpg         → Économie
+  informatique.jpg     → Informatique
+  sciences.jpg         → Sciences
+  droit.jpg            → Droit
+  sante.jpg            → Santé
+  religion.jpg         → Religion
+  histoire.jpg         → Histoire
+  jeunesse.jpg         → Jeunesse
+  cuisine.jpg          → Cuisine
+  langues.jpg          → Langues
+  concours.jpg         → Concours
+  magazine.jpg         → Magazines

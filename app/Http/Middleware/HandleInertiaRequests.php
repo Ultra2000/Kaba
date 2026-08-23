@@ -50,7 +50,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'nav' => [
                 'categories' => Cache::remember('nav.categories', 3600, fn () =>
-                    Category::orderBy('name')->get(['name', 'slug', 'icon'])),
+                    Category::orderBy('name')->get(['name', 'slug', 'icon', 'image'])),
             ],
             // Métadonnées SEO / Open Graph par défaut — surchargeables par contrôleur.
             'meta' => [
