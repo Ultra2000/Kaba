@@ -151,9 +151,9 @@ const romanPrice = (l) => {
                 <Link href="/explorer?category=roman" class="text-sm font-bold text-gray-500 hover:text-brand-600 shrink-0">Tous les romans →</Link>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+            <div class="flex flex-wrap gap-5">
                 <div v-for="(r, i) in topRomans" :key="r.id"
-                     class="group relative rounded-2xl overflow-hidden aspect-[2/3] flex flex-col shadow-floating">
+                     class="group relative rounded-2xl overflow-hidden aspect-[3/4] w-[calc(50%-0.625rem)] sm:w-[300px] flex flex-col shadow-floating">
                     <!-- Fond : couverture → ISBN → photo de catégorie → dégradé d'accent -->
                     <img v-if="currentCover(r)" :src="currentCover(r)" :alt="r.title" loading="lazy"
                          @error="onCoverError(r)"
