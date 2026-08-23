@@ -16,9 +16,19 @@ const catImage = (c) => c.image ? c.image : `/images/categories/${c.slug}.jpg`;
 const failedImages = reactive(new Set());
 const onImageError = (slug) => failedImages.add(slug);
 
-// Couverture d'un livre pour le fond des cards « Meilleurs romans ».
-const bookCover = (l) => l.cover_url
-    || (l.isbn ? `https://covers.openlibrary.org/b/isbn/${l.isbn}-L.jpg` : null);
+// Fond des cards « Meilleurs romans » : cascade de repli.
+// couverture uploadée → couverture ISBN → photo de catégorie → dégradé d'accent.
+const coverCandidates = (l) => {
+    const arr = [];
+    if (l.cover_url) arr.push(l.cover_url);
+    if (l.isbn) arr.push(`https://covers.openlibrary.org/b/isbn/${l.isbn}-L.jpg`);
+    if (l.category?.slug) arr.push(`/images/categories/${l.category.slug}.jpg`);
+    return arr;
+};
+// Étape courante (index dans les candidats) par livre ; avancée à chaque erreur.
+const coverStage = reactive({});
+const currentCover = (l) => coverCandidates(l)[coverStage[l.id] ?? 0] ?? null;
+const onCoverError = (l) => { coverStage[l.id] = (coverStage[l.id] ?? 0) + 1; };
 
 // Palette d'accents (3 cards, style immersif façon référence).
 const romanAccents = [
@@ -33,8 +43,6 @@ const romanPrice = (l) => {
     if (l.type === 'recherche') return 'Recherché';
     return new Intl.NumberFormat('fr-FR').format(l.price) + ' FCFA';
 };
-const failedCovers = reactive(new Set());
-const onCoverError = (id) => failedCovers.add(id);
 </script>
 
 <template>
@@ -143,40 +151,38 @@ const onCoverError = (id) => failedCovers.add(id);
                 <Link href="/explorer?category=roman" class="text-sm font-bold text-gray-500 hover:text-brand-600 shrink-0">Tous les romans →</Link>
             </div>
 
-            <div class="grid md:grid-cols-3 gap-6">
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 <div v-for="(r, i) in topRomans" :key="r.id"
-                     class="group relative rounded-3xl overflow-hidden min-h-[440px] flex flex-col shadow-floating">
-                    <!-- Fond : couverture assombrie, sinon dégradé d'accent -->
-                    <img v-if="bookCover(r) && !failedCovers.has(r.id)" :src="bookCover(r)" :alt="r.title" loading="lazy"
-                         @error="onCoverError(r.id)"
+                     class="group relative rounded-2xl overflow-hidden h-[280px] flex flex-col shadow-floating">
+                    <!-- Fond : couverture → ISBN → photo de catégorie → dégradé d'accent -->
+                    <img v-if="currentCover(r)" :src="currentCover(r)" :alt="r.title" loading="lazy"
+                         @error="onCoverError(r)"
                          class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     <div v-else class="absolute inset-0 bg-gradient-to-br" :class="romanAccents[i % 3].grad"></div>
                     <!-- Voile sombre pour la lisibilité -->
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/25"></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/20"></div>
 
                     <!-- Contenu -->
-                    <div class="relative z-10 flex flex-col h-full p-7">
-                        <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg" :class="romanAccents[i % 3].badge">
+                    <div class="relative z-10 flex flex-col h-full p-5">
+                        <div class="w-11 h-11 rounded-xl flex items-center justify-center text-white text-base shadow-lg" :class="romanAccents[i % 3].badge">
                             <i class="fa-solid" :class="romanAccents[i % 3].icon"></i>
                         </div>
 
                         <div class="mt-auto">
-                            <h3 class="text-2xl font-black text-white leading-tight mb-2">{{ r.title }}</h3>
-                            <p class="text-white/75 text-sm font-medium mb-5">{{ r.author }} — disponible à {{ r.city }}.</p>
+                            <h3 class="text-lg font-black text-white leading-tight mb-1 line-clamp-1">{{ r.title }}</h3>
+                            <p class="text-white/70 text-xs font-medium mb-3">{{ r.author }} · {{ r.city }}</p>
 
-                            <ul class="space-y-2.5 mb-6">
-                                <li class="flex items-center gap-2.5 text-white text-sm font-medium">
-                                    <i class="fa-solid fa-circle-check" :class="romanAccents[i % 3].check"></i>
-                                    {{ r.condition_label ?? 'Bon état' }}
-                                </li>
-                                <li class="flex items-center gap-2.5 text-white text-sm font-medium">
-                                    <i class="fa-solid fa-circle-check" :class="romanAccents[i % 3].check"></i>
-                                    {{ romanPrice(r) }}
-                                </li>
-                            </ul>
+                            <div class="flex items-center gap-3 mb-4 text-white text-xs font-medium">
+                                <span class="flex items-center gap-1.5">
+                                    <i class="fa-solid fa-circle-check" :class="romanAccents[i % 3].check"></i>{{ r.condition_label ?? 'Bon état' }}
+                                </span>
+                                <span class="flex items-center gap-1.5">
+                                    <i class="fa-solid fa-circle-check" :class="romanAccents[i % 3].check"></i>{{ romanPrice(r) }}
+                                </span>
+                            </div>
 
                             <Link :href="`/livres/${r.id}`"
-                                  class="inline-flex items-center gap-2 font-bold text-sm pb-1 border-b-2 transition-colors" :class="romanAccents[i % 3].link">
+                                  class="inline-flex items-center gap-2 font-bold text-sm pb-0.5 border-b-2 transition-colors" :class="romanAccents[i % 3].link">
                                 Voir le livre <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
                             </Link>
                         </div>
