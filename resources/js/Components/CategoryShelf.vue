@@ -59,10 +59,10 @@ function onErr(e, l) { e.target.onerror = null; e.target.src = placeholder(l); }
                     <!-- Ombre de contact sur l'étagère -->
                     <div class="absolute inset-x-1 -bottom-1 h-2.5 bg-black/40 blur-md rounded-[50%]
                                 transition-all duration-300 group-hover/book:inset-x-0 group-hover/book:bg-black/30 group-hover/book:blur-lg"></div>
-                    <!-- Livre incliné (pivot base) : couverture + tranche de pages -->
+                    <!-- Livre adossé (recul du haut) + léger tangage latéral, pivot base -->
                     <div class="relative rounded-[3px] overflow-hidden shadow-[0_10px_18px_-6px_rgba(0,0,0,0.45)]
                                 border-r-[3px] border-r-[#e6ddca] group-hover/book:shadow-[0_20px_30px_-8px_rgba(0,0,0,0.5)] transition-shadow duration-300"
-                         :style="{ transform: `rotate(${tilt(i)}deg)`, transformOrigin: 'bottom center' }">
+                         :style="{ transform: `perspective(800px) rotateX(9deg) rotate(${tilt(i)}deg)`, transformOrigin: 'bottom center' }">
                         <img :src="cover(b)" @error="onErr($event, b)" :alt="b.title" loading="lazy"
                              class="h-44 md:h-52 w-auto object-contain bg-white block">
                         <!-- Reliure (bord gauche, léger creux) -->
@@ -75,7 +75,7 @@ function onErr(e, l) { e.target.onerror = null; e.target.src = placeholder(l); }
             </div>
 
             <!-- Planche : photo bois si dispo, sinon planche CSS -->
-            <div class="relative">
+            <div class="relative -mt-1.5">
                 <!-- Vraie photo de planche (déposer /images/shelf-wood.png, idéalement fond transparent) -->
                 <img v-if="!shelfImgFailed" src="/images/shelf-wood.png" alt="" aria-hidden="true"
                      @error="shelfImgFailed = true"
