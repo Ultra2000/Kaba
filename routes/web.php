@@ -36,6 +36,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/lire', [NotificationController::class, 'markAllRead'])->name('notifications.read');
 
+    // Panier + demandes de disponibilité
+    Route::get('/panier', [\App\Http\Controllers\CartController::class, 'index'])->name('cart.index');
+    Route::post('/panier/{listing}', [\App\Http\Controllers\CartController::class, 'add'])->name('cart.add');
+    Route::delete('/panier/{listing}', [\App\Http\Controllers\CartController::class, 'remove'])->name('cart.remove');
+
+    Route::get('/demandes', [\App\Http\Controllers\OrderController::class, 'index'])->name('orders.index');
+    Route::post('/demandes/vendeur/{seller}', [\App\Http\Controllers\OrderController::class, 'store'])->name('orders.store');
+    Route::post('/demandes/{order}/accepter', [\App\Http\Controllers\OrderController::class, 'accept'])->name('orders.accept');
+    Route::post('/demandes/{order}/refuser', [\App\Http\Controllers\OrderController::class, 'decline'])->name('orders.decline');
+    Route::post('/demandes/{order}/remise', [\App\Http\Controllers\OrderController::class, 'complete'])->name('orders.complete');
+    Route::post('/demandes/{order}/annuler', [\App\Http\Controllers\OrderController::class, 'cancel'])->name('orders.cancel');
+
     // Messagerie
     Route::get('/messagerie', [\App\Http\Controllers\ConversationController::class, 'index'])->name('messages.index');
     Route::post('/messagerie/demarrer/{listing}', [\App\Http\Controllers\ConversationController::class, 'start'])->name('messages.start');

@@ -24,6 +24,13 @@ function contact() {
     router.post(`/messagerie/demarrer/${props.listing.id}`);
 }
 
+/* Panier */
+const inCart = computed(() => (page.props.auth?.cart ?? []).includes(props.listing.id));
+function addToCart() {
+    if (!page.props.auth?.user) { router.get('/login'); return; }
+    router.post(`/panier/${props.listing.id}`, {}, { preserveScroll: true });
+}
+
 /* Signalement */
 const REASONS = {
     faux_livre: 'Faux livre / contrefaçon',
@@ -114,8 +121,13 @@ const initials = computed(() => (u.value?.name || '').split(/\s+/).map(w => w[0]
 
                     <!-- Actions -->
                     <div class="flex flex-col sm:flex-row gap-3 mb-6">
-                        <button class="flex-1 bg-brand-600 hover:bg-brand-700 text-white px-6 py-4 rounded-full font-bold shadow-floating transition-all active:scale-95 flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-bolt"></i> {{ listing.type === 'don' ? 'Réserver' : listing.type === 'echange' ? 'Proposer un échange' : 'Acheter' }}
+                        <Link v-if="!isOwner && listing.type !== 'recherche' && inCart" href="/panier"
+                              class="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-full font-bold shadow-floating transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-circle-check"></i> Dans le panier — voir
+                        </Link>
+                        <button v-else-if="!isOwner && listing.type !== 'recherche'" @click="addToCart"
+                                class="flex-1 bg-brand-600 hover:bg-brand-700 text-white px-6 py-4 rounded-full font-bold shadow-floating transition-all active:scale-95 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-basket-shopping"></i> Ajouter au panier
                         </button>
                         <button v-if="!isOwner" @click="contact"
                                 class="bg-white text-dark border-2 border-gray-200 px-6 py-4 rounded-full font-bold hover:border-dark transition-colors flex items-center justify-center gap-2">

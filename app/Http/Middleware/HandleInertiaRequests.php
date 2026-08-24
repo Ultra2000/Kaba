@@ -47,6 +47,9 @@ class HandleInertiaRequests extends Middleware
                 'unreadMessages' => $request->user()
                     ? $request->user()->unreadMessagesCount()
                     : 0,
+                'cart' => $request->user()
+                    ? $request->user()->cartListings()->pluck('listings.id')
+                    : [],
             ],
             'nav' => [
                 'categories' => Cache::remember('nav.categories', 3600, fn () =>

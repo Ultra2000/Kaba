@@ -87,6 +87,23 @@ class User extends Authenticatable
             ->count();
     }
 
+    /** Livres mis au panier (via cart_items). */
+    public function cartListings()
+    {
+        return $this->belongsToMany(Listing::class, 'cart_items')->withTimestamps();
+    }
+
+    /** Demandes envoyées (acheteur) / reçues (vendeur). */
+    public function ordersSent()
+    {
+        return $this->hasMany(Order::class, 'buyer_id');
+    }
+
+    public function ordersReceived()
+    {
+        return $this->hasMany(Order::class, 'seller_id');
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';

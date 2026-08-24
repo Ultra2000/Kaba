@@ -6,6 +6,7 @@ const page = usePage();
 const user = computed(() => page.props.auth?.user);
 const unread = computed(() => page.props.auth?.unread ?? 0);
 const unreadMessages = computed(() => page.props.auth?.unreadMessages ?? 0);
+const cartCount = computed(() => (page.props.auth?.cart ?? []).length);
 const categories = computed(() => page.props.nav?.categories ?? []);
 
 const open = ref(null);        // 'cat' | 'user' | null
@@ -77,6 +78,10 @@ onUnmounted(() => document.removeEventListener('click', onDocClick));
                     <Link v-if="user" href="/favoris" class="w-11 h-11 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-orange-500 transition-colors" title="Favoris">
                         <i class="fa-regular fa-heart text-lg"></i>
                     </Link>
+                    <Link v-if="user" href="/panier" class="relative w-11 h-11 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-brand-600 transition-colors" title="Panier">
+                        <i class="fa-solid fa-basket-shopping text-lg"></i>
+                        <span v-if="cartCount > 0" class="absolute top-1.5 right-1 bg-orange-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{{ cartCount }}</span>
+                    </Link>
                     <Link v-if="user" href="/messagerie" class="relative w-11 h-11 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-brand-600 transition-colors" title="Messages">
                         <i class="fa-regular fa-comment text-lg"></i>
                         <span v-if="unreadMessages > 0" class="absolute top-1.5 right-1.5 bg-brand-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{{ unreadMessages }}</span>
@@ -100,6 +105,7 @@ onUnmounted(() => document.removeEventListener('click', onDocClick));
                             <nav class="p-1.5 text-sm font-medium">
                                 <Link href="/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-brand-50 hover:text-brand-700"><i class="fa-solid fa-gauge-high w-4"></i> Tableau de bord</Link>
                                 <Link href="/favoris" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-brand-50 hover:text-brand-700"><i class="fa-solid fa-heart w-4"></i> Favoris</Link>
+                                <Link href="/demandes" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-brand-50 hover:text-brand-700"><i class="fa-solid fa-basket-shopping w-4"></i> Mes demandes</Link>
                                 <Link href="/profile" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-brand-50 hover:text-brand-700"><i class="fa-solid fa-gear w-4"></i> Profil</Link>
                                 <Link v-if="user.role === 'admin'" href="/admin" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-brand-700 font-bold hover:bg-brand-50"><i class="fa-solid fa-shield-halved w-4"></i> Administration</Link>
                                 <div class="border-t border-gray-100 my-1"></div>
