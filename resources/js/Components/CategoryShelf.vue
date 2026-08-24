@@ -14,6 +14,9 @@ const scroller = ref(null);
 function next() { scroller.value?.scrollBy({ left: 340, behavior: 'smooth' }); }
 function prev() { scroller.value?.scrollBy({ left: -340, behavior: 'smooth' }); }
 
+// Si /images/shelf-wood.png existe, on l'utilise comme planche ; sinon repli sur la planche CSS.
+const shelfImgFailed = ref(false);
+
 // Couverture : annonce → ISBN → placeholder coloré (une étagère a toujours des couvertures).
 const COVERS = ['7c3aed', 'f59e0b', '10b981', 'ef4444', '3b82f6', '6d28d9', 'db2777', '0891b2', '65a30d', 'c2410c'];
 const placeholder = (l) =>
@@ -65,15 +68,19 @@ function onErr(e, l) { e.target.onerror = null; e.target.src = placeholder(l); }
                 <div v-if="!books.length" class="text-gray-400 text-sm py-16">Bientôt des livres ici.</div>
             </div>
 
-            <!-- Planche en bois clair (texture) + fine épaisseur -->
+            <!-- Planche : photo bois si dispo, sinon planche CSS -->
             <div class="relative">
-                <!-- Face supérieure -->
-                <div class="h-2.5 bg-repeat-x rounded-t-[2px]"
-                     style="background-image:url('/images/wood-shelf.svg'); background-size:auto 100%"></div>
-                <!-- Épaisseur (bord avant, bois clair ombré) -->
-                <div class="h-1.5 bg-gradient-to-b from-[#c8aa79] to-[#ac8f63] rounded-b-[2px]"></div>
-                <!-- Ombre portée sous la planche -->
-                <div class="h-3 bg-gradient-to-b from-black/20 to-transparent"></div>
+                <!-- Vraie photo de planche (déposer /images/shelf-wood.png, idéalement fond transparent) -->
+                <img v-if="!shelfImgFailed" src="/images/shelf-wood.png" alt="" aria-hidden="true"
+                     @error="shelfImgFailed = true"
+                     class="w-full h-6 md:h-7 object-fill select-none pointer-events-none drop-shadow-[0_7px_7px_rgba(0,0,0,0.2)]">
+                <!-- Repli : planche CSS (bois clair) -->
+                <template v-else>
+                    <div class="h-2.5 bg-repeat-x rounded-t-[2px]"
+                         style="background-image:url('/images/wood-shelf.svg'); background-size:auto 100%"></div>
+                    <div class="h-1.5 bg-gradient-to-b from-[#c8aa79] to-[#ac8f63] rounded-b-[2px]"></div>
+                    <div class="h-3 bg-gradient-to-b from-black/20 to-transparent"></div>
+                </template>
             </div>
 
             <!-- Flèche de défilement -->
