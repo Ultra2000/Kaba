@@ -198,12 +198,13 @@ const romanPrice = (l) => {
                 <h2 class="text-2xl md:text-3xl font-black text-dark">Parcourez par catégorie</h2>
             </div>
             <div class="space-y-6">
-                <CategoryShelf v-for="s in shelves" :key="s.slug"
+                <CategoryShelf v-for="(s, i) in shelves" :key="s.slug"
                                :title="s.title"
                                :description="s.description"
                                :icon="s.icon"
                                :href="`/explorer?category=${s.slug}`"
-                               :books="s.books" />
+                               :books="s.books"
+                               :first="i === 0" />
             </div>
         </section>
 

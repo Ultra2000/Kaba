@@ -8,6 +8,7 @@ const props = defineProps({
     icon: { type: String, default: 'fa-book-open' },
     href: { type: String, default: '/explorer' },
     books: { type: Array, default: () => [] },
+    first: { type: Boolean, default: false },
 });
 
 const scroller = ref(null);
@@ -43,12 +44,15 @@ function onErr(e, l) { e.target.onerror = null; e.target.src = placeholder(l); }
         </div>
 
         <!-- Étagère -->
-        <div class="relative flex-1 min-w-0 w-full">
-            <!-- Ombre projetée par l'étagère du dessus sur le haut des livres -->
-            <div class="pointer-events-none absolute top-6 inset-x-0 h-9 bg-gradient-to-b from-black/25 to-transparent z-10"></div>
-            <!-- Rangée de livres (défilante, avec perspective 3D) -->
+        <div class="flex-1 min-w-0 w-full">
+          <!-- La planche s'ajuste à la largeur des livres (pas de vide à droite) -->
+          <div class="relative w-fit max-w-full">
+            <!-- Ombre projetée par l'étagère du dessus (sauf la première) -->
+            <div v-if="!first" class="pointer-events-none absolute top-6 inset-x-0 h-9 bg-gradient-to-b from-black/25 to-transparent z-10"></div>
+            <!-- Rangée de livres (défilante) -->
             <div ref="scroller"
-                 class="flex items-end gap-6 md:gap-7 overflow-x-auto overflow-y-hidden pr-14 pt-6 snap-x scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                 :class="books.length > 3 ? 'pr-14' : 'pr-1'"
+                 class="flex items-end gap-6 md:gap-7 overflow-x-auto overflow-y-hidden pt-6 snap-x scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 <Link v-for="b in books" :key="b.id" :href="`/livres/${b.id}`"
                       class="group/book shrink-0 snap-start relative block origin-bottom transition-transform duration-300 ease-out hover:-translate-y-2.5">
                     <!-- Ombre de contact sur l'étagère -->
@@ -89,6 +93,7 @@ function onErr(e, l) { e.target.onerror = null; e.target.src = placeholder(l); }
                     aria-label="Suivant">
                 <i class="fa-solid fa-chevron-right"></i>
             </button>
+          </div>
         </div>
     </div>
 </template>
