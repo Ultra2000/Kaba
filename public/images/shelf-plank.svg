@@ -1,0 +1,32 @@
+<svg width="100%" height="18" viewBox="0 0 460 18" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9 0.15" numOctaves="4" seed="2" result="noise"/>
+      <feColorMatrix type="saturate" values="0" in="noise" result="gray"/>
+      <feBlend in="SourceGraphic" in2="gray" mode="overlay" result="blend"/>
+      <feComposite in="blend" in2="SourceGraphic" operator="in"/>
+    </filter>
+    <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#d4a96a"/>
+      <stop offset="18%"  stop-color="#c49355"/>
+      <stop offset="50%"  stop-color="#b07d3e"/>
+      <stop offset="82%"  stop-color="#9a6b2e"/>
+      <stop offset="100%" stop-color="#7a5020"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Surface bois + grain -->
+  <rect width="100%" height="18" rx="2" fill="url(#wood)"/>
+  <rect width="100%" height="18" rx="2" fill="url(#wood)" filter="url(#grain)" opacity="0.55"/>
+
+  <!-- Reflet du dessus -->
+  <line x1="0" y1="1" x2="100%" y2="1" stroke="#e8c080" stroke-width="0.8" opacity="0.5"/>
+  <line x1="0" y1="3" x2="100%" y2="3" stroke="#c8a050" stroke-width="0.4" opacity="0.3"/>
+
+  <!-- Ombre du bas -->
+  <line x1="0" y1="16" x2="100%" y2="16" stroke="#5a3510" stroke-width="1.2" opacity="0.6"/>
+
+  <!-- Veines du bois -->
+  <path d="M0,8 Q80,6 160,9 Q240,12 320,8 Q400,5 460,9" stroke="#8a6030" stroke-width="0.6" fill="none" opacity="0.4"/>
+  <path d="M0,5 Q120,4 240,6 Q360,8 460,5" stroke="#c09040" stroke-width="0.4" fill="none" opacity="0.25"/>
+</svg>

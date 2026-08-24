@@ -72,10 +72,10 @@ function onErr(e, l) { e.target.onerror = null; e.target.src = placeholder(l); }
 
             <!-- Planche : photo bois si dispo, sinon planche CSS -->
             <div class="relative -mt-1.5">
-                <!-- Vraie photo de planche (déposer /images/shelf-wood.png, idéalement fond transparent) -->
-                <img v-if="!shelfImgFailed" src="/images/shelf-wood.png" alt="" aria-hidden="true"
+                <!-- Planche SVG -->
+                <img v-if="!shelfImgFailed" src="/images/shelf-plank.svg" alt="" aria-hidden="true"
                      @error="shelfImgFailed = true"
-                     class="w-full h-3.5 md:h-4 object-fill select-none pointer-events-none drop-shadow-[0_6px_6px_rgba(0,0,0,0.2)]">
+                     class="w-full h-[18px] object-fill select-none pointer-events-none drop-shadow-[0_6px_6px_rgba(0,0,0,0.25)]">
                 <!-- Repli : planche CSS (bois clair) -->
                 <template v-else>
                     <div class="h-2.5 bg-repeat-x rounded-t-[2px]"
