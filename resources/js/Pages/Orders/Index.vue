@@ -11,8 +11,9 @@ const props = defineProps({
 const tab = ref(props.received.length && !props.sent.length ? 'received' : 'sent');
 
 const fmt = (n) => new Intl.NumberFormat('fr-FR').format(n) + ' F';
-// Total des livres non refusés uniquement.
-const total = (o) => o.items.filter((it) => it.status !== 'declined').reduce((s, it) => s + (it.price || 0), 0);
+// Total des livres non refusés, au prix convenu (offre sinon prix affiché).
+const total = (o) => o.items.filter((it) => it.status !== 'declined')
+    .reduce((s, it) => s + (it.effective_price ?? it.price ?? 0), 0);
 
 const ITEM_BADGE = {
     accepted: 'bg-green-50 text-green-700 border-green-200',
@@ -117,7 +118,13 @@ const dateFr = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', 
                                     {{ it.status_label }}
                                 </span>
 
-                                <p class="text-sm font-bold text-dark shrink-0">{{ it.price > 0 ? fmt(it.price) : (it.listing?.type === 'echange' ? 'Échange' : 'Gratuit') }}</p>
+                                <div class="text-right shrink-0">
+                                    <template v-if="it.offered_price && it.offered_price < it.price">
+                                        <p class="text-sm font-bold text-brand-700">{{ fmt(it.offered_price) }}</p>
+                                        <p class="text-[11px] text-gray-400"><span class="line-through">{{ fmt(it.price) }}</span> · offre</p>
+                                    </template>
+                                    <p v-else class="text-sm font-bold text-dark">{{ it.price > 0 ? fmt(it.price) : (it.listing?.type === 'echange' ? 'Échange' : 'Gratuit') }}</p>
+                                </div>
 
                                 <!-- Réponse livre par livre (vendeur, tant que le livre est en attente) -->
                                 <div v-if="mode === 'received' && o.status === 'pending' && it.status === 'pending'" class="flex gap-1.5 shrink-0">

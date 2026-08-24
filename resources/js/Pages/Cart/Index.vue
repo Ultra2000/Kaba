@@ -14,12 +14,19 @@ function removeItem(listing) {
     router.delete(`/panier/${listing.id}`, { preserveScroll: true });
 }
 
-// Un formulaire de message + envoi par vendeur.
+// Un formulaire de message + offres de prix + envoi par vendeur.
 const messages = reactive({});
+const offers = reactive({}); // listing_id -> montant proposé
 const sending = reactive({});
-function requestAvailability(sellerId) {
+function requestAvailability(sellerId, items) {
     sending[sellerId] = true;
-    router.post(`/demandes/vendeur/${sellerId}`, { message: messages[sellerId] ?? '' }, {
+    // Seules les offres des livres de CE vendeur partent avec la demande.
+    const sellerOffers = {};
+    for (const l of items) {
+        const amount = parseInt(offers[l.id], 10);
+        if (l.type === 'vente' && amount > 0) sellerOffers[l.id] = amount;
+    }
+    router.post(`/demandes/vendeur/${sellerId}`, { message: messages[sellerId] ?? '', offers: sellerOffers }, {
         onFinish: () => { sending[sellerId] = false; },
     });
 }
@@ -86,6 +93,22 @@ function onErr(e, l) {
                                 <Link :href="`/livres/${l.id}`" class="font-bold text-dark text-sm hover:text-brand-600 line-clamp-1">{{ l.title }}</Link>
                                 <p class="text-xs text-gray-400 truncate">{{ l.author }}</p>
                                 <p class="text-sm font-bold text-dark mt-1">{{ priceLabel(l) }}</p>
+
+                                <!-- Offre de prix (ventes uniquement) -->
+                                <div v-if="l.type === 'vente'" class="flex items-center gap-2 mt-2">
+                                    <div class="relative">
+                                        <input v-model="offers[l.id]" type="number" min="100" :max="l.price" step="100"
+                                               class="w-32 h-9 pl-3 pr-8 rounded-lg border border-gray-200 text-sm font-medium outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                                               placeholder="Votre offre">
+                                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-bold">F</span>
+                                    </div>
+                                    <span v-if="parseInt(offers[l.id], 10) > 0 && parseInt(offers[l.id], 10) < l.price" class="text-xs font-bold text-green-600">
+                                        −{{ fmt(l.price - parseInt(offers[l.id], 10)) }}
+                                    </span>
+                                    <span v-else-if="parseInt(offers[l.id], 10) >= l.price" class="text-xs font-medium text-gray-400">
+                                        ≥ prix affiché, ignorée
+                                    </span>
+                                </div>
                             </div>
                             <button @click="removeItem(l)" class="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors" title="Retirer">
                                 <i class="fa-solid fa-trash-can text-sm"></i>
@@ -98,7 +121,7 @@ function onErr(e, l) {
                         <textarea v-model="messages[g.seller.id]" rows="2" maxlength="500"
                                   class="w-full rounded-xl border border-gray-200 text-sm p-3 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200 mb-3"
                                   placeholder="Message au vendeur (facultatif) — ex. « Bonjour, ces livres sont-ils disponibles ce week-end à Cotonou ? »"></textarea>
-                        <button @click="requestAvailability(g.seller.id)" :disabled="sending[g.seller.id]"
+                        <button @click="requestAvailability(g.seller.id, g.items)" :disabled="sending[g.seller.id]"
                                 class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white h-12 px-6 rounded-full font-bold shadow-floating transition-all active:scale-95">
                             <i class="fa-solid fa-paper-plane"></i> Demander la disponibilité
                         </button>

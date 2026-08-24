@@ -272,6 +272,41 @@ class CartOrderTest extends TestCase
         $this->assertSame(1, $refused->fresh()->quantity);
     }
 
+    public function test_buyer_can_make_price_offers(): void
+    {
+        $seller = User::factory()->create();
+        $buyer = User::factory()->create();
+        $vente = $this->makeListing($seller, ['title' => 'Vente', 'price' => 3000]);
+        $don   = $this->makeListing($seller, ['title' => 'Don', 'type' => 'don', 'price' => 0]);
+        $cher  = $this->makeListing($seller, ['title' => 'Cher', 'price' => 5000]);
+
+        foreach ([$vente, $don, $cher] as $l) {
+            $this->actingAs($buyer)->post("/panier/{$l->id}");
+        }
+
+        $this->actingAs($buyer)->post("/demandes/vendeur/{$seller->id}", [
+            'offers' => [
+                $vente->id => 2000,  // offre valide (< prix)
+                $don->id   => 1000,  // ignorée : ce n'est pas une vente
+                $cher->id  => 6000,  // ignorée : ≥ prix affiché
+            ],
+        ]);
+
+        $order = Order::first();
+        $itemVente = $order->items()->where('listing_id', $vente->id)->first();
+        $itemDon   = $order->items()->where('listing_id', $don->id)->first();
+        $itemCher  = $order->items()->where('listing_id', $cher->id)->first();
+
+        $this->assertSame(2000, $itemVente->offered_price);
+        $this->assertNull($itemDon->offered_price);
+        $this->assertNull($itemCher->offered_price);
+
+        // Total au prix convenu : 2000 (offre) + 0 (don) + 5000 (prix affiché) = 7000.
+        $this->assertSame(7000, $order->fresh()->load('items')->total());
+        // La notification mentionne l'offre.
+        $this->assertStringContainsString('offre de prix', $seller->notifications()->first()->data['message']);
+    }
+
     public function test_orders_page_renders(): void
     {
         $user = User::factory()->create();

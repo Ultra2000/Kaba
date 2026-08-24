@@ -40,10 +40,11 @@ class Order extends Model
         return self::STATUSES[$this->status] ?? $this->status;
     }
 
-    /** Total des livres non refusés (ce que l'acheteur paiera réellement). */
+    /** Total des livres non refusés, au prix convenu (offre acceptée sinon prix affiché). */
     public function total(): int
     {
-        return (int) $this->items->where('status', '!=', 'declined')->sum('price');
+        return (int) $this->items->where('status', '!=', 'declined')
+            ->sum(fn ($item) => $item->offered_price ?? $item->price ?? 0);
     }
 
     /**

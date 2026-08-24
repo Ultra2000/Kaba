@@ -31,7 +31,11 @@ class OrderController extends Controller
     /** Demander la disponibilité des livres d'UN vendeur présents dans le panier. */
     public function store(Request $request, User $seller): RedirectResponse
     {
-        $data = $request->validate(['message' => 'nullable|string|max:500']);
+        $data = $request->validate([
+            'message'  => 'nullable|string|max:500',
+            'offers'   => 'nullable|array',
+            'offers.*' => 'nullable|integer|min:100',
+        ]);
 
         $listings = $request->user()->cartListings()
             ->where('listings.user_id', $seller->id)
@@ -47,9 +51,16 @@ class OrderController extends Controller
         ]);
 
         foreach ($listings as $l) {
+            $price = $l->type === 'vente' ? (int) $l->price : 0;
+
+            // Offre de l'acheteur : ventes uniquement, ignorée si ≥ prix affiché.
+            $offered = (int) ($data['offers'][$l->id] ?? 0);
+            $offered = ($l->type === 'vente' && $offered > 0 && $offered < $price) ? $offered : null;
+
             $order->items()->create([
-                'listing_id' => $l->id,
-                'price'      => $l->type === 'vente' ? (int) $l->price : 0,
+                'listing_id'    => $l->id,
+                'price'         => $price,
+                'offered_price' => $offered,
             ]);
         }
 
@@ -57,11 +68,13 @@ class OrderController extends Controller
         $request->user()->cartListings()->detach($listings->pluck('id'));
 
         $count = $listings->count();
+        $hasOffers = $order->items()->whereNotNull('offered_price')->exists();
         $seller->notify(new KabaNotification([
             'icon'    => 'fa-basket-shopping',
             'color'   => 'brand',
             'kind'    => 'order',
-            'message' => "{$request->user()->name} demande la disponibilité de {$count} livre".($count > 1 ? 's' : '').".",
+            'message' => "{$request->user()->name} demande la disponibilité de {$count} livre".($count > 1 ? 's' : '')
+                .($hasOffers ? ' (avec une offre de prix)' : '').".",
             'url'     => '/demandes',
         ]));
 
