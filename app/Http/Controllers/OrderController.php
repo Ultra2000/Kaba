@@ -158,6 +158,54 @@ class OrderController extends Controller
         return back()->with('success', 'Remise confirmée.');
     }
 
+    /**
+     * Ouvre la messagerie entre l'acheteur et le vendeur à propos de cette demande.
+     * Réutilise une conversation existante entre les deux ; sinon en crée une,
+     * amorcée avec un récapitulatif des livres disponibles.
+     */
+    public function discuss(Request $request, Order $order): RedirectResponse
+    {
+        $me = $request->user();
+        abort_unless(in_array($me->id, [$order->buyer_id, $order->seller_id]), 403);
+
+        // Conversation déjà ouverte entre ces deux personnes (peu importe l'annonce) ?
+        $conversation = \App\Models\Conversation::where(function ($q) use ($order) {
+            $q->where('buyer_id', $order->buyer_id)->where('seller_id', $order->seller_id);
+        })->orWhere(function ($q) use ($order) {
+            $q->where('buyer_id', $order->seller_id)->where('seller_id', $order->buyer_id);
+        })->latest('last_message_at')->first();
+
+        if (! $conversation) {
+            $available = $order->items()->with('listing:id,title')->where('status', '!=', 'declined')->get();
+
+            $conversation = \App\Models\Conversation::create([
+                'listing_id' => $available->first()?->listing_id,
+                'buyer_id'   => $order->buyer_id,
+                'seller_id'  => $order->seller_id,
+            ]);
+
+            // Premier message de contexte, envoyé au nom de l'acheteur.
+            $titles = $available->map(fn ($it) => '« '.($it->listing->title ?? 'Livre').' »')->implode(', ');
+            $conversation->messages()->create([
+                'sender_id' => $order->buyer_id,
+                'body'      => "Bonjour ! Suite à ma demande de disponibilité ({$titles}), comment organise-t-on la remise ?",
+            ]);
+            $conversation->update(['last_message_at' => now()]);
+
+            if ($me->id === $order->buyer_id) {
+                $order->seller->notify(new KabaNotification([
+                    'kind'    => 'message',
+                    'icon'    => 'fa-comment',
+                    'color'   => 'brand',
+                    'message' => "{$me->name} vous a écrit au sujet de sa demande.",
+                    'url'     => '/messagerie',
+                ]));
+            }
+        }
+
+        return redirect()->route('messages.show', $conversation);
+    }
+
     public function cancel(Request $request, Order $order): RedirectResponse
     {
         abort_unless($order->buyer_id === $request->user()->id, 403);

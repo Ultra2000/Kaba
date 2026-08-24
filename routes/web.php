@@ -49,6 +49,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/demandes/{order}/livres/{item}/refuser', [\App\Http\Controllers\OrderController::class, 'respondItem'])->name('orders.items.decline');
     Route::post('/demandes/{order}/remise', [\App\Http\Controllers\OrderController::class, 'complete'])->name('orders.complete');
     Route::post('/demandes/{order}/annuler', [\App\Http\Controllers\OrderController::class, 'cancel'])->name('orders.cancel');
+    Route::post('/demandes/{order}/discuter', [\App\Http\Controllers\OrderController::class, 'discuss'])->name('orders.discuss');
 
     // Messagerie
     Route::get('/messagerie', [\App\Http\Controllers\ConversationController::class, 'index'])->name('messages.index');

@@ -203,6 +203,46 @@ class CartOrderTest extends TestCase
         $this->actingAs($buyer)->post("/demandes/{$order->id}/livres/{$item->id}/accepter")->assertForbidden();
     }
 
+    public function test_buyer_can_discuss_after_seller_responds(): void
+    {
+        $seller = User::factory()->create();
+        $buyer = User::factory()->create();
+        $a = $this->makeListing($seller, ['title' => 'Livre A', 'price' => 2000]);
+        $b = $this->makeListing($seller, ['title' => 'Livre B', 'price' => 3000]);
+
+        $this->actingAs($buyer)->post("/panier/{$a->id}");
+        $this->actingAs($buyer)->post("/panier/{$b->id}");
+        $this->actingAs($buyer)->post("/demandes/vendeur/{$seller->id}");
+        $order = Order::first();
+
+        [$itemA, $itemB] = $order->items()->orderBy('id')->get();
+        $this->actingAs($seller)->post("/demandes/{$order->id}/livres/{$itemA->id}/accepter");
+        $this->actingAs($seller)->post("/demandes/{$order->id}/livres/{$itemB->id}/refuser");
+
+        // L'acheteur ouvre la discussion : conversation créée, amorcée avec le récap des dispo.
+        $response = $this->actingAs($buyer)->post("/demandes/{$order->id}/discuter");
+        $conversation = \App\Models\Conversation::first();
+        $this->assertNotNull($conversation);
+        $response->assertRedirect(route('messages.show', $conversation));
+
+        $first = $conversation->messages()->first();
+        $this->assertSame($buyer->id, $first->sender_id);
+        $this->assertStringContainsString('Livre A', $first->body);
+        $this->assertStringNotContainsString('Livre B', $first->body); // refusé → pas dans le récap
+
+        // Réutilise la même conversation au 2e clic (pas de doublon).
+        $this->actingAs($buyer)->post("/demandes/{$order->id}/discuter");
+        $this->assertSame(1, \App\Models\Conversation::count());
+
+        // Le vendeur peut aussi ouvrir la discussion.
+        $this->actingAs($seller)->post("/demandes/{$order->id}/discuter")
+            ->assertRedirect(route('messages.show', $conversation));
+
+        // Un tiers non.
+        $other = User::factory()->create();
+        $this->actingAs($other)->post("/demandes/{$order->id}/discuter")->assertForbidden();
+    }
+
     public function test_orders_page_renders(): void
     {
         $user = User::factory()->create();

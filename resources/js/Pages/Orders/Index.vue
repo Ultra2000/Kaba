@@ -140,6 +140,12 @@ const dateFr = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', 
                                 <p v-if="total(o) > 0" class="font-black text-dark mr-auto">Total : {{ fmt(total(o)) }}</p>
                                 <p v-else class="mr-auto"></p>
 
+                                <!-- Discuter (dès que le vendeur a répondu favorablement) -->
+                                <button v-if="['accepted', 'completed'].includes(o.status)" @click="act(o, 'discuter')"
+                                        class="inline-flex items-center gap-2 bg-white border-2 border-brand-200 text-brand-700 hover:bg-brand-50 h-10 px-5 rounded-full text-sm font-bold transition-colors">
+                                    <i class="fa-regular fa-comment"></i> {{ mode === 'sent' ? 'Discuter avec le vendeur' : "Discuter avec l'acheteur" }}
+                                </button>
+
                                 <!-- Actions vendeur -->
                                 <template v-if="mode === 'received'">
                                     <button v-if="o.status === 'pending'" @click="act(o, 'accepter')"
