@@ -10,10 +10,6 @@ const props = defineProps({
     books: { type: Array, default: () => [] },
 });
 
-// Légère inclinaison des livres (pivot sur la base) pour le rendu « posé sur la planche ».
-const TILT = [-2.4, 1.6, -1, 2.2, -1.7, 1.1, -0.6, 2, -1.4, 0.8];
-const tilt = (i) => TILT[i % TILT.length];
-
 const scroller = ref(null);
 function next() { scroller.value?.scrollBy({ left: 340, behavior: 'smooth' }); }
 function prev() { scroller.value?.scrollBy({ left: -340, behavior: 'smooth' }); }
@@ -59,10 +55,10 @@ function onErr(e, l) { e.target.onerror = null; e.target.src = placeholder(l); }
                     <!-- Ombre de contact sur l'étagère -->
                     <div class="absolute inset-x-1 -bottom-1 h-2.5 bg-black/40 blur-md rounded-[50%]
                                 transition-all duration-300 group-hover/book:inset-x-0 group-hover/book:bg-black/30 group-hover/book:blur-lg"></div>
-                    <!-- Livre adossé (recul du haut) + léger tangage latéral, pivot base -->
+                    <!-- Livre droit, très légèrement adossé (recul du haut), pivot base -->
                     <div class="relative rounded-[3px] overflow-hidden shadow-[0_10px_18px_-6px_rgba(0,0,0,0.45)]
-                                border-r-[3px] border-r-[#e6ddca] group-hover/book:shadow-[0_20px_30px_-8px_rgba(0,0,0,0.5)] transition-shadow duration-300"
-                         :style="{ transform: `perspective(800px) rotateX(9deg) rotate(${tilt(i)}deg)`, transformOrigin: 'bottom center' }">
+                                border-r-[3px] border-r-[#e6ddca] group-hover/book:shadow-[0_20px_30px_-8px_rgba(0,0,0,0.5)] transition-shadow duration-300
+                                [transform:perspective(900px)_rotateX(5deg)] [transform-origin:bottom_center]">
                         <img :src="cover(b)" @error="onErr($event, b)" :alt="b.title" loading="lazy"
                              class="h-44 md:h-52 w-auto object-contain bg-white block">
                         <!-- Reliure (bord gauche, léger creux) -->
