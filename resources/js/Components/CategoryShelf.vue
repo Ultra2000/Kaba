@@ -41,6 +41,8 @@ function onErr(e, l) { e.target.onerror = null; e.target.src = placeholder(l); }
 
         <!-- Étagère -->
         <div class="relative flex-1 min-w-0 w-full">
+            <!-- Ombre projetée par l'étagère du dessus sur le haut des livres -->
+            <div class="pointer-events-none absolute top-6 inset-x-0 h-9 bg-gradient-to-b from-black/25 to-transparent z-10"></div>
             <!-- Rangée de livres (défilante, avec perspective 3D) -->
             <div ref="scroller"
                  class="flex items-end gap-6 md:gap-7 overflow-x-auto overflow-y-hidden pr-14 pt-6 snap-x scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
@@ -63,15 +65,15 @@ function onErr(e, l) { e.target.onerror = null; e.target.src = placeholder(l); }
                 <div v-if="!books.length" class="text-gray-400 text-sm py-16">Bientôt des livres ici.</div>
             </div>
 
-            <!-- Planche en bois clair (texture) + épaisseur 3D -->
+            <!-- Planche en bois clair (texture) + fine épaisseur -->
             <div class="relative">
                 <!-- Face supérieure -->
-                <div class="h-3 bg-repeat-x rounded-t-[2px]"
+                <div class="h-2.5 bg-repeat-x rounded-t-[2px]"
                      style="background-image:url('/images/wood-shelf.svg'); background-size:auto 100%"></div>
                 <!-- Épaisseur (bord avant, bois clair ombré) -->
-                <div class="h-3 bg-gradient-to-b from-[#c8aa79] to-[#a1855b] shadow-[inset_0_1px_0_rgba(0,0,0,0.12)] rounded-b-[2px]"></div>
-                <!-- Ombre portée au sol -->
-                <div class="h-4 mx-8 bg-gradient-to-b from-black/18 to-transparent rounded-[50%] blur-[2px]"></div>
+                <div class="h-1.5 bg-gradient-to-b from-[#c8aa79] to-[#ac8f63] rounded-b-[2px]"></div>
+                <!-- Ombre portée sous la planche -->
+                <div class="h-3 bg-gradient-to-b from-black/20 to-transparent"></div>
             </div>
 
             <!-- Flèche de défilement -->

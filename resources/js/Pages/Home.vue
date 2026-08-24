@@ -197,7 +197,7 @@ const romanPrice = (l) => {
                 <p class="text-brand-600 font-bold text-sm uppercase tracking-wider mb-1">Notre bibliothèque</p>
                 <h2 class="text-2xl md:text-3xl font-black text-dark">Parcourez par catégorie</h2>
             </div>
-            <div class="space-y-16">
+            <div class="space-y-6">
                 <CategoryShelf v-for="s in shelves" :key="s.slug"
                                :title="s.title"
                                :description="s.description"
