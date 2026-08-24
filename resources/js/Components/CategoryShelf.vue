@@ -63,12 +63,15 @@ function onErr(e, l) { e.target.onerror = null; e.target.src = placeholder(l); }
                 <div v-if="!books.length" class="text-gray-400 text-sm py-16">Bientôt des livres ici.</div>
             </div>
 
-            <!-- Planche en bois (texture) + épaisseur 3D -->
+            <!-- Planche en bois clair (texture) + épaisseur 3D -->
             <div class="relative">
-                <div class="h-3.5 bg-repeat-x rounded-t-[2px]"
+                <!-- Face supérieure -->
+                <div class="h-3 bg-repeat-x rounded-t-[2px]"
                      style="background-image:url('/images/wood-shelf.svg'); background-size:auto 100%"></div>
-                <div class="h-2.5 bg-gradient-to-b from-[#5e3a1b] to-[#3a2210]"></div>
-                <div class="h-5 mx-8 bg-gradient-to-b from-black/25 to-transparent rounded-[50%] blur-[2px]"></div>
+                <!-- Épaisseur (bord avant, bois clair ombré) -->
+                <div class="h-3 bg-gradient-to-b from-[#c8aa79] to-[#a1855b] shadow-[inset_0_1px_0_rgba(0,0,0,0.12)] rounded-b-[2px]"></div>
+                <!-- Ombre portée au sol -->
+                <div class="h-4 mx-8 bg-gradient-to-b from-black/18 to-transparent rounded-[50%] blur-[2px]"></div>
             </div>
 
             <!-- Flèche de défilement -->
