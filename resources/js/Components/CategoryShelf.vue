@@ -8,8 +8,11 @@ const props = defineProps({
     icon: { type: String, default: 'fa-book-open' },
     href: { type: String, default: '/explorer' },
     books: { type: Array, default: () => [] },
-    first: { type: Boolean, default: false },
 });
+
+// Légère inclinaison des livres (pivot sur la base) pour le rendu « posé sur la planche ».
+const TILT = [-2.4, 1.6, -1, 2.2, -1.7, 1.1, -0.6, 2, -1.4, 0.8];
+const tilt = (i) => TILT[i % TILT.length];
 
 const scroller = ref(null);
 function next() { scroller.value?.scrollBy({ left: 340, behavior: 'smooth' }); }
@@ -47,20 +50,19 @@ function onErr(e, l) { e.target.onerror = null; e.target.src = placeholder(l); }
         <div class="flex-1 min-w-0 w-full">
           <!-- La planche s'ajuste à la largeur des livres (pas de vide à droite) -->
           <div class="relative w-fit max-w-full">
-            <!-- Ombre projetée par l'étagère du dessus (sauf la première) -->
-            <div v-if="!first" class="pointer-events-none absolute top-6 inset-x-0 h-9 bg-gradient-to-b from-black/25 to-transparent z-10"></div>
             <!-- Rangée de livres (défilante) -->
             <div ref="scroller"
                  :class="books.length > 3 ? 'pr-14' : 'pr-1'"
-                 class="flex items-end gap-6 md:gap-7 overflow-x-auto overflow-y-hidden pt-6 snap-x scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                <Link v-for="b in books" :key="b.id" :href="`/livres/${b.id}`"
+                 class="flex items-end gap-6 md:gap-7 overflow-x-auto overflow-y-hidden pt-8 snap-x scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                <Link v-for="(b, i) in books" :key="b.id" :href="`/livres/${b.id}`"
                       class="group/book shrink-0 snap-start relative block origin-bottom transition-transform duration-300 ease-out hover:-translate-y-2.5">
                     <!-- Ombre de contact sur l'étagère -->
                     <div class="absolute inset-x-1 -bottom-1 h-2.5 bg-black/40 blur-md rounded-[50%]
                                 transition-all duration-300 group-hover/book:inset-x-0 group-hover/book:bg-black/30 group-hover/book:blur-lg"></div>
-                    <!-- Livre : couverture + tranche de pages (épaisseur) -->
+                    <!-- Livre incliné (pivot base) : couverture + tranche de pages -->
                     <div class="relative rounded-[3px] overflow-hidden shadow-[0_10px_18px_-6px_rgba(0,0,0,0.45)]
-                                border-r-[3px] border-r-[#e6ddca] group-hover/book:shadow-[0_20px_30px_-8px_rgba(0,0,0,0.5)] transition-shadow duration-300">
+                                border-r-[3px] border-r-[#e6ddca] group-hover/book:shadow-[0_20px_30px_-8px_rgba(0,0,0,0.5)] transition-shadow duration-300"
+                         :style="{ transform: `rotate(${tilt(i)}deg)`, transformOrigin: 'bottom center' }">
                         <img :src="cover(b)" @error="onErr($event, b)" :alt="b.title" loading="lazy"
                              class="h-44 md:h-52 w-auto object-contain bg-white block">
                         <!-- Reliure (bord gauche, léger creux) -->
