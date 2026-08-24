@@ -1,12 +1,28 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import PublicLayout from '@/Layouts/PublicLayout.vue';
 
 const props = defineProps({
     sent: Array,     // demandes envoyées (je suis l'acheteur)
     received: Array, // demandes reçues (je suis le vendeur)
+    reviewed: { type: Array, default: () => [] }, // ids des demandes déjà évaluées par moi
 });
+
+/* Avis post-vente */
+const reviewOpen = reactive({});           // order_id -> bool
+const reviewData = reactive({});           // order_id -> { rating, comment }
+function toggleReview(o) {
+    reviewOpen[o.id] = !reviewOpen[o.id];
+    if (!reviewData[o.id]) reviewData[o.id] = { rating: 5, comment: '' };
+}
+function submitReview(o) {
+    router.post(`/demandes/${o.id}/avis`, reviewData[o.id], {
+        preserveScroll: true,
+        onSuccess: () => { reviewOpen[o.id] = false; },
+    });
+}
+const hasReviewed = (o) => props.reviewed.includes(o.id);
 
 const tab = ref(props.received.length && !props.sent.length ? 'received' : 'sent');
 
@@ -176,6 +192,47 @@ const dateFr = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', 
                                         <i class="fa-solid fa-xmark"></i> Annuler
                                     </button>
                                 </template>
+
+                                <!-- Avis après la remise -->
+                                <template v-if="o.status === 'completed'">
+                                    <span v-if="hasReviewed(o)" class="inline-flex items-center gap-2 text-sm font-bold text-green-600">
+                                        <i class="fa-solid fa-star"></i> Avis déposé
+                                    </span>
+                                    <button v-else @click="toggleReview(o)"
+                                            class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white h-10 px-5 rounded-full text-sm font-bold transition-colors">
+                                        <i class="fa-solid fa-star"></i>
+                                        {{ mode === 'sent' ? 'Évaluer le vendeur' : "Évaluer l'acheteur" }}
+                                    </button>
+                                </template>
+                            </div>
+
+                            <!-- Formulaire d'avis -->
+                            <div v-if="reviewOpen[o.id]" class="mt-4 bg-white border border-gray-200 rounded-2xl p-4">
+                                <p class="font-bold text-dark text-sm mb-3">
+                                    Votre avis sur {{ mode === 'sent' ? (o.seller?.name ?? 'le vendeur') : (o.buyer?.name ?? "l'acheteur") }}
+                                </p>
+                                <div class="flex items-center gap-1.5 mb-3">
+                                    <button v-for="n in 5" :key="n" type="button" @click="reviewData[o.id].rating = n"
+                                            class="text-2xl transition-transform hover:scale-110"
+                                            :class="n <= reviewData[o.id].rating ? 'text-amber-400' : 'text-gray-200'"
+                                            :aria-label="`${n} étoile${n > 1 ? 's' : ''}`">
+                                        <i class="fa-solid fa-star"></i>
+                                    </button>
+                                    <span class="ml-2 text-sm font-bold text-gray-500">{{ reviewData[o.id].rating }}/5</span>
+                                </div>
+                                <textarea v-model="reviewData[o.id].comment" rows="3" maxlength="1000"
+                                          class="w-full rounded-xl border border-gray-200 text-sm p-3 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200 mb-3"
+                                          :placeholder="mode === 'sent' ? 'Le livre était-il conforme ? La remise s\'est-elle bien passée ?' : 'L\'acheteur a-t-il été ponctuel et courtois ?'"></textarea>
+                                <div class="flex gap-2">
+                                    <button @click="submitReview(o)"
+                                            class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white h-10 px-5 rounded-full text-sm font-bold transition-colors">
+                                        <i class="fa-solid fa-paper-plane"></i> Publier mon avis
+                                    </button>
+                                    <button @click="reviewOpen[o.id] = false"
+                                            class="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-600 hover:border-gray-300 h-10 px-5 rounded-full text-sm font-bold transition-colors">
+                                        Annuler
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

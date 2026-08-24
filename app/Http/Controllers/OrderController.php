@@ -18,13 +18,22 @@ class OrderController extends Controller
     {
         $with = ['items.listing:id,title,author,isbn,type,price,status', 'items.listing.photos'];
 
+        $sent = $request->user()->ordersSent()
+            ->with(array_merge($with, ['seller:id,name,city,is_verified']))
+            ->latest()->get();
+        $received = $request->user()->ordersReceived()
+            ->with(array_merge($with, ['buyer:id,name,city']))
+            ->latest()->get();
+
+        // Demandes pour lesquelles j'ai déjà laissé un avis.
+        $reviewedOrderIds = \App\Models\Review::where('author_id', $request->user()->id)
+            ->whereIn('order_id', $sent->pluck('id')->merge($received->pluck('id')))
+            ->pluck('order_id');
+
         return Inertia::render('Orders/Index', [
-            'sent' => $request->user()->ordersSent()
-                ->with(array_merge($with, ['seller:id,name,city,is_verified']))
-                ->latest()->get(),
-            'received' => $request->user()->ordersReceived()
-                ->with(array_merge($with, ['buyer:id,name,city']))
-                ->latest()->get(),
+            'sent'     => $sent,
+            'received' => $received,
+            'reviewed' => $reviewedOrderIds,
         ]);
     }
 
@@ -163,7 +172,8 @@ class OrderController extends Controller
 
         // Chaque livre remis sort du stock ; l'annonce passe « vendu »
         // seulement quand il ne reste plus d'exemplaire.
-        foreach ($order->items()->where('status', 'accepted')->with('listing')->get() as $item) {
+        $delivered = $order->items()->where('status', 'accepted')->with('listing')->get();
+        foreach ($delivered as $item) {
             $listing = $item->listing;
             if (! $listing || $listing->status !== 'active') {
                 continue;
@@ -174,6 +184,9 @@ class OrderController extends Controller
                 'status'   => $remaining > 0 ? 'active' : 'sold',
             ]);
         }
+
+        // Le compteur de ventes du vendeur augmente d'un par livre remis.
+        $request->user()->increment('sales_count', $delivered->count());
 
         $order->buyer->notify(new KabaNotification([
             'icon'    => 'fa-handshake',
@@ -232,6 +245,43 @@ class OrderController extends Controller
         }
 
         return redirect()->route('messages.show', $conversation);
+    }
+
+    /** Avis suite à la vente : l'acheteur évalue le vendeur, le vendeur évalue l'acheteur. */
+    public function review(Request $request, Order $order): RedirectResponse
+    {
+        $me = $request->user();
+        abort_unless(in_array($me->id, [$order->buyer_id, $order->seller_id]), 403);
+        abort_unless($order->status === 'completed', 422, 'La remise doit être effectuée avant de laisser un avis.');
+
+        $data = $request->validate([
+            'rating'  => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:1000',
+        ]);
+
+        $reviewee = $me->id === $order->buyer_id ? $order->seller : $order->buyer;
+
+        \App\Models\Review::updateOrCreate(
+            ['author_id' => $me->id, 'seller_id' => $reviewee->id],
+            [
+                'order_id'   => $order->id,
+                'listing_id' => $order->items()->where('status', 'accepted')->value('listing_id'),
+                'rating'     => $data['rating'],
+                'comment'    => $data['comment'] ?? null,
+            ],
+        );
+
+        $reviewee->recalcRating();
+
+        $reviewee->notify(new KabaNotification([
+            'icon'    => 'fa-star',
+            'color'   => 'brand',
+            'kind'    => 'review',
+            'message' => "{$me->name} vous a laissé un avis ({$data['rating']}/5) suite à votre transaction.",
+            'url'     => '/demandes',
+        ]));
+
+        return back()->with('success', 'Merci pour votre avis !');
     }
 
     public function cancel(Request $request, Order $order): RedirectResponse

@@ -307,6 +307,93 @@ class CartOrderTest extends TestCase
         $this->assertStringContainsString('offre de prix', $seller->notifications()->first()->data['message']);
     }
 
+    public function test_completion_increments_seller_sales_count(): void
+    {
+        $seller = User::factory()->create(['sales_count' => 4]);
+        $buyer = User::factory()->create();
+        $a = $this->makeListing($seller, ['price' => 2000]);
+        $b = $this->makeListing($seller, ['price' => 3000]);
+        $refused = $this->makeListing($seller, ['price' => 1000]);
+
+        foreach ([$a, $b, $refused] as $l) {
+            $this->actingAs($buyer)->post("/panier/{$l->id}");
+        }
+        $this->actingAs($buyer)->post("/demandes/vendeur/{$seller->id}");
+        $order = Order::first();
+
+        $refusedItem = $order->items()->where('listing_id', $refused->id)->first();
+        $this->actingAs($seller)->post("/demandes/{$order->id}/livres/{$refusedItem->id}/refuser");
+        $this->actingAs($seller)->post("/demandes/{$order->id}/accepter");
+        $this->actingAs($seller)->post("/demandes/{$order->id}/remise");
+
+        // 2 livres remis (le refusé ne compte pas) → 4 + 2 = 6.
+        $this->assertSame(6, $seller->fresh()->sales_count);
+    }
+
+    public function test_both_parties_can_review_after_completion(): void
+    {
+        $seller = User::factory()->create();
+        $buyer = User::factory()->create();
+        $listing = $this->makeListing($seller, ['price' => 2000]);
+
+        $this->actingAs($buyer)->post("/panier/{$listing->id}");
+        $this->actingAs($buyer)->post("/demandes/vendeur/{$seller->id}");
+        $order = Order::first();
+
+        // Avant la remise : refusé.
+        $this->actingAs($buyer)->post("/demandes/{$order->id}/avis", ['rating' => 5])->assertStatus(422);
+
+        $this->actingAs($seller)->post("/demandes/{$order->id}/accepter");
+        $this->actingAs($seller)->post("/demandes/{$order->id}/remise");
+
+        // L'acheteur évalue le vendeur.
+        $this->actingAs($buyer)->post("/demandes/{$order->id}/avis", [
+            'rating' => 5, 'comment' => 'Livre conforme, vendeur ponctuel.',
+        ])->assertRedirect();
+
+        $review = \App\Models\Review::where('author_id', $buyer->id)->first();
+        $this->assertSame($seller->id, $review->seller_id);
+        $this->assertSame($order->id, $review->order_id);
+        $this->assertSame(5.0, (float) $seller->fresh()->rating_avg);
+
+        // Le vendeur évalue l'acheteur.
+        $this->actingAs($seller)->post("/demandes/{$order->id}/avis", [
+            'rating' => 4, 'comment' => 'Acheteur sérieux.',
+        ])->assertRedirect();
+
+        $back = \App\Models\Review::where('author_id', $seller->id)->first();
+        $this->assertSame($buyer->id, $back->seller_id);
+        $this->assertSame(4.0, (float) $buyer->fresh()->rating_avg);
+
+        // Chacun a été notifié de l'avis reçu.
+        $this->assertTrue($seller->notifications()->get()
+            ->contains(fn ($n) => ($n->data['kind'] ?? null) === 'review'));
+
+        // Un tiers ne peut pas évaluer cette transaction.
+        $other = User::factory()->create();
+        $this->actingAs($other)->post("/demandes/{$order->id}/avis", ['rating' => 1])->assertForbidden();
+    }
+
+    public function test_orders_page_exposes_reviewed_ids(): void
+    {
+        $seller = User::factory()->create();
+        $buyer = User::factory()->create();
+        $listing = $this->makeListing($seller, ['price' => 2000]);
+
+        $this->actingAs($buyer)->post("/panier/{$listing->id}");
+        $this->actingAs($buyer)->post("/demandes/vendeur/{$seller->id}");
+        $order = Order::first();
+        $this->actingAs($seller)->post("/demandes/{$order->id}/accepter");
+        $this->actingAs($seller)->post("/demandes/{$order->id}/remise");
+        $this->actingAs($buyer)->post("/demandes/{$order->id}/avis", ['rating' => 5]);
+
+        $this->actingAs($buyer)->get('/demandes')
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Orders/Index')
+                ->has('reviewed', 1));
+    }
+
     public function test_orders_page_renders(): void
     {
         $user = User::factory()->create();

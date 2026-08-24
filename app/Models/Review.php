@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Review extends Model
 {
-    protected $fillable = ['author_id', 'seller_id', 'listing_id', 'rating', 'comment'];
+    protected $fillable = ['author_id', 'seller_id', 'listing_id', 'order_id', 'rating', 'comment'];
 
     protected $casts = ['rating' => 'integer'];
 
