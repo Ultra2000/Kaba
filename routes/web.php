@@ -45,6 +45,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/demandes/vendeur/{seller}', [\App\Http\Controllers\OrderController::class, 'store'])->name('orders.store');
     Route::post('/demandes/{order}/accepter', [\App\Http\Controllers\OrderController::class, 'accept'])->name('orders.accept');
     Route::post('/demandes/{order}/refuser', [\App\Http\Controllers\OrderController::class, 'decline'])->name('orders.decline');
+    Route::post('/demandes/{order}/livres/{item}/accepter', [\App\Http\Controllers\OrderController::class, 'respondItem'])->name('orders.items.accept');
+    Route::post('/demandes/{order}/livres/{item}/refuser', [\App\Http\Controllers\OrderController::class, 'respondItem'])->name('orders.items.decline');
     Route::post('/demandes/{order}/remise', [\App\Http\Controllers\OrderController::class, 'complete'])->name('orders.complete');
     Route::post('/demandes/{order}/annuler', [\App\Http\Controllers\OrderController::class, 'cancel'])->name('orders.cancel');
 

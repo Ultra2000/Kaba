@@ -128,6 +128,81 @@ class CartOrderTest extends TestCase
         $this->assertSame('cancelled', $order->fresh()->status);
     }
 
+    public function test_seller_can_respond_per_item(): void
+    {
+        $seller = User::factory()->create();
+        $buyer = User::factory()->create();
+        $a = $this->makeListing($seller, ['title' => 'Livre A', 'price' => 2000]);
+        $b = $this->makeListing($seller, ['title' => 'Livre B', 'price' => 3000]);
+
+        $this->actingAs($buyer)->post("/panier/{$a->id}");
+        $this->actingAs($buyer)->post("/panier/{$b->id}");
+        $this->actingAs($buyer)->post("/demandes/vendeur/{$seller->id}");
+        $order = Order::first();
+        [$itemA, $itemB] = $order->items()->orderBy('id')->get();
+
+        // Accepte A : la demande reste en attente (B non répondu), pas encore de notification.
+        $this->actingAs($seller)->post("/demandes/{$order->id}/livres/{$itemA->id}/accepter")->assertRedirect();
+        $this->assertSame('accepted', $itemA->fresh()->status);
+        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertSame(0, $buyer->notifications()->count());
+
+        // Refuse B : la demande passe à acceptée (1 dispo sur 2) + notification.
+        $this->actingAs($seller)->post("/demandes/{$order->id}/livres/{$itemB->id}/refuser")->assertRedirect();
+        $this->assertSame('declined', $itemB->fresh()->status);
+        $this->assertSame('accepted', $order->fresh()->status);
+        $this->assertSame(1, $buyer->notifications()->count());
+
+        // Le total ne compte que les livres disponibles.
+        $this->assertSame(2000, $order->fresh()->load('items')->total());
+    }
+
+    public function test_all_items_declined_declines_order(): void
+    {
+        $seller = User::factory()->create();
+        $buyer = User::factory()->create();
+        $a = $this->makeListing($seller, ['price' => 2000]);
+
+        $this->actingAs($buyer)->post("/panier/{$a->id}");
+        $this->actingAs($buyer)->post("/demandes/vendeur/{$seller->id}");
+        $order = Order::first();
+        $item = $order->items()->first();
+
+        $this->actingAs($seller)->post("/demandes/{$order->id}/livres/{$item->id}/refuser");
+        $this->assertSame('declined', $order->fresh()->status);
+    }
+
+    public function test_global_accept_sets_all_pending_items_accepted(): void
+    {
+        $seller = User::factory()->create();
+        $buyer = User::factory()->create();
+        $a = $this->makeListing($seller, ['price' => 2000]);
+        $b = $this->makeListing($seller, ['price' => 3000]);
+
+        $this->actingAs($buyer)->post("/panier/{$a->id}");
+        $this->actingAs($buyer)->post("/panier/{$b->id}");
+        $this->actingAs($buyer)->post("/demandes/vendeur/{$seller->id}");
+        $order = Order::first();
+
+        $this->actingAs($seller)->post("/demandes/{$order->id}/accepter");
+        $this->assertSame('accepted', $order->fresh()->status);
+        $this->assertSame(2, $order->items()->where('status', 'accepted')->count());
+    }
+
+    public function test_non_seller_cannot_respond_item(): void
+    {
+        $seller = User::factory()->create();
+        $buyer = User::factory()->create();
+        $a = $this->makeListing($seller, ['price' => 2000]);
+
+        $this->actingAs($buyer)->post("/panier/{$a->id}");
+        $this->actingAs($buyer)->post("/demandes/vendeur/{$seller->id}");
+        $order = Order::first();
+        $item = $order->items()->first();
+
+        $this->actingAs($buyer)->post("/demandes/{$order->id}/livres/{$item->id}/accepter")->assertForbidden();
+    }
+
     public function test_orders_page_renders(): void
     {
         $user = User::factory()->create();

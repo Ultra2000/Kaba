@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\User;
 use App\Notifications\KabaNotification;
 use Illuminate\Http\RedirectResponse;
@@ -67,12 +68,15 @@ class OrderController extends Controller
         return redirect()->route('orders.index')->with('success', 'Demande envoyée au vendeur.');
     }
 
+    /** Tout accepter : les livres encore en attente passent à « disponible ». */
     public function accept(Request $request, Order $order): RedirectResponse
     {
         abort_unless($order->seller_id === $request->user()->id, 403);
         abort_unless($order->status === 'pending', 422);
 
-        $order->update(['status' => 'accepted']);
+        $order->items()->where('status', 'pending')->update(['status' => 'accepted']);
+        $order->syncStatusFromItems();
+
         $order->buyer->notify(new KabaNotification([
             'icon'    => 'fa-circle-check',
             'color'   => 'green',
@@ -84,21 +88,57 @@ class OrderController extends Controller
         return back()->with('success', 'Demande acceptée.');
     }
 
+    /** Tout refuser : les livres encore en attente passent à « indisponible ». */
     public function decline(Request $request, Order $order): RedirectResponse
     {
         abort_unless($order->seller_id === $request->user()->id, 403);
         abort_unless($order->status === 'pending', 422);
 
-        $order->update(['status' => 'declined']);
+        $order->items()->where('status', 'pending')->update(['status' => 'declined']);
+        $order->syncStatusFromItems();
+
+        $notif = $order->fresh()->status === 'accepted'
+            ? "{$request->user()->name} a répondu : certains livres sont disponibles, d'autres non. Consultez le détail."
+            : "{$request->user()->name} a refusé votre demande de disponibilité.";
+
         $order->buyer->notify(new KabaNotification([
             'icon'    => 'fa-circle-xmark',
             'color'   => 'red',
             'kind'    => 'order',
-            'message' => "{$request->user()->name} a refusé votre demande de disponibilité.",
+            'message' => $notif,
             'url'     => '/demandes',
         ]));
 
-        return back()->with('success', 'Demande refusée.');
+        return back()->with('success', 'Réponse envoyée.');
+    }
+
+    /** Réponse livre par livre (accepter ou refuser un seul article). */
+    public function respondItem(Request $request, Order $order, OrderItem $item): RedirectResponse
+    {
+        abort_unless($order->seller_id === $request->user()->id, 403);
+        abort_unless($item->order_id === $order->id, 404);
+        abort_unless($order->status === 'pending' && $item->status === 'pending', 422);
+
+        $accepted = $request->routeIs('orders.items.accept');
+        $item->update(['status' => $accepted ? 'accepted' : 'declined']);
+        $order->syncStatusFromItems();
+
+        // On ne notifie l'acheteur que lorsque le vendeur a répondu à tout.
+        if ($order->fresh()->status !== 'pending') {
+            $summary = $order->items()->where('status', 'accepted')->count();
+            $count = $order->items()->count();
+            $order->buyer->notify(new KabaNotification([
+                'icon'    => $summary > 0 ? 'fa-circle-check' : 'fa-circle-xmark',
+                'color'   => $summary > 0 ? 'green' : 'red',
+                'kind'    => 'order',
+                'message' => $summary > 0
+                    ? "{$request->user()->name} a répondu : {$summary} livre".($summary > 1 ? 's' : '')." sur {$count} disponible".($summary > 1 ? 's' : '')."."
+                    : "{$request->user()->name} a refusé votre demande de disponibilité.",
+                'url'     => '/demandes',
+            ]));
+        }
+
+        return back()->with('success', $accepted ? 'Livre marqué disponible.' : 'Livre marqué indisponible.');
     }
 
     public function complete(Request $request, Order $order): RedirectResponse

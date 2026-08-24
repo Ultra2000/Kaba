@@ -11,7 +11,18 @@ const props = defineProps({
 const tab = ref(props.received.length && !props.sent.length ? 'received' : 'sent');
 
 const fmt = (n) => new Intl.NumberFormat('fr-FR').format(n) + ' F';
-const total = (o) => o.items.reduce((s, it) => s + (it.price || 0), 0);
+// Total des livres non refusés uniquement.
+const total = (o) => o.items.filter((it) => it.status !== 'declined').reduce((s, it) => s + (it.price || 0), 0);
+
+const ITEM_BADGE = {
+    accepted: 'bg-green-50 text-green-700 border-green-200',
+    declined: 'bg-red-50 text-red-500 border-red-200 line-through',
+    pending:  'bg-amber-50 text-amber-600 border-amber-200',
+};
+
+function actItem(order, item, action) {
+    router.post(`/demandes/${order.id}/livres/${item.id}/${action}`, {}, { preserveScroll: true });
+}
 
 const STATUS_STYLE = {
     pending:   'bg-amber-50 text-amber-700 border-amber-200',
@@ -91,13 +102,34 @@ const dateFr = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', 
                         <ul class="divide-y divide-gray-50">
                             <li v-for="it in o.items" :key="it.id" class="flex items-center gap-4 px-5 py-3">
                                 <img :src="cover(it.listing)" @error="onErr($event, it.listing)" :alt="it.listing?.title"
-                                     class="w-10 h-[60px] object-cover rounded-[3px] shadow-sm shrink-0">
+                                     class="w-10 h-[60px] object-cover rounded-[3px] shadow-sm shrink-0"
+                                     :class="{ 'opacity-40 grayscale': it.status === 'declined' }">
                                 <div class="flex-1 min-w-0">
-                                    <Link v-if="it.listing" :href="`/livres/${it.listing.id}`" class="font-bold text-dark text-sm hover:text-brand-600 line-clamp-1">{{ it.listing.title }}</Link>
+                                    <Link v-if="it.listing" :href="`/livres/${it.listing.id}`" class="font-bold text-dark text-sm hover:text-brand-600 line-clamp-1"
+                                          :class="{ 'text-gray-400 line-through': it.status === 'declined' }">{{ it.listing.title }}</Link>
                                     <span v-else class="text-sm text-gray-400 italic">Annonce supprimée</span>
                                     <p class="text-xs text-gray-400 truncate">{{ it.listing?.author }}</p>
                                 </div>
+
+                                <!-- Statut du livre (dès qu'il y a eu une réponse) -->
+                                <span v-if="it.status !== 'pending' || o.status !== 'pending'"
+                                      class="text-[11px] font-bold px-2.5 py-1 rounded-full border shrink-0" :class="ITEM_BADGE[it.status]">
+                                    {{ it.status_label }}
+                                </span>
+
                                 <p class="text-sm font-bold text-dark shrink-0">{{ it.price > 0 ? fmt(it.price) : (it.listing?.type === 'echange' ? 'Échange' : 'Gratuit') }}</p>
+
+                                <!-- Réponse livre par livre (vendeur, tant que le livre est en attente) -->
+                                <div v-if="mode === 'received' && o.status === 'pending' && it.status === 'pending'" class="flex gap-1.5 shrink-0">
+                                    <button @click="actItem(o, it, 'accepter')" title="Disponible"
+                                            class="w-9 h-9 rounded-full bg-green-50 border border-green-200 text-green-600 hover:bg-green-600 hover:text-white transition-colors flex items-center justify-center">
+                                        <i class="fa-solid fa-check text-sm"></i>
+                                    </button>
+                                    <button @click="actItem(o, it, 'refuser')" title="Indisponible"
+                                            class="w-9 h-9 rounded-full bg-red-50 border border-red-200 text-red-500 hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center">
+                                        <i class="fa-solid fa-xmark text-sm"></i>
+                                    </button>
+                                </div>
                             </li>
                         </ul>
 
@@ -112,11 +144,11 @@ const dateFr = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', 
                                 <template v-if="mode === 'received'">
                                     <button v-if="o.status === 'pending'" @click="act(o, 'accepter')"
                                             class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white h-10 px-5 rounded-full text-sm font-bold transition-colors">
-                                        <i class="fa-solid fa-check"></i> Accepter
+                                        <i class="fa-solid fa-check-double"></i> {{ o.items.length > 1 ? 'Tout accepter' : 'Accepter' }}
                                     </button>
                                     <button v-if="o.status === 'pending'" @click="act(o, 'refuser')"
                                             class="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-600 hover:border-red-300 hover:text-red-600 h-10 px-5 rounded-full text-sm font-bold transition-colors">
-                                        <i class="fa-solid fa-xmark"></i> Refuser
+                                        <i class="fa-solid fa-xmark"></i> {{ o.items.length > 1 ? 'Tout refuser' : 'Refuser' }}
                                     </button>
                                     <button v-if="o.status === 'accepted'" @click="act(o, 'remise')"
                                             class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white h-10 px-5 rounded-full text-sm font-bold transition-colors">

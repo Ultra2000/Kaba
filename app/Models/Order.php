@@ -40,8 +40,31 @@ class Order extends Model
         return self::STATUSES[$this->status] ?? $this->status;
     }
 
+    /** Total des livres non refusés (ce que l'acheteur paiera réellement). */
     public function total(): int
     {
-        return (int) $this->items->sum('price');
+        return (int) $this->items->where('status', '!=', 'declined')->sum('price');
+    }
+
+    /**
+     * Déduit le statut de la demande depuis les réponses par livre.
+     * Tous refusés → declined ; plus d'attente et ≥1 accepté → accepted ; sinon pending.
+     * Ne touche pas aux états finaux (completed / cancelled).
+     */
+    public function syncStatusFromItems(): void
+    {
+        if (in_array($this->status, ['completed', 'cancelled'])) {
+            return;
+        }
+
+        $items = $this->items()->get();
+
+        if ($items->where('status', 'pending')->isNotEmpty()) {
+            $this->update(['status' => 'pending']);
+        } elseif ($items->where('status', 'accepted')->isNotEmpty()) {
+            $this->update(['status' => 'accepted']);
+        } else {
+            $this->update(['status' => 'declined']);
+        }
     }
 }
