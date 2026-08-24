@@ -143,8 +143,33 @@ class ListingController extends Controller
         }
 
         $this->notifyMatchingSearches($listing);
+        $this->notifyFollowers($listing);
 
         return redirect()->route('listings.show', $listing)->with('success', 'Annonce publiée avec succès !');
+    }
+
+    /** Prévient les abonnés du vendeur qu'il vient de publier un livre. */
+    private function notifyFollowers(Listing $listing): void
+    {
+        if ($listing->type === 'recherche') {
+            return;
+        }
+
+        $verb = match ($listing->type) {
+            'don'     => 'propose en don',
+            'echange' => 'propose en échange',
+            default   => 'vient de publier',
+        };
+
+        foreach ($listing->user->followers as $follower) {
+            $follower->notify(new KabaNotification([
+                'kind'    => 'follow',
+                'icon'    => 'fa-user-group',
+                'color'   => 'text-brand-600 bg-brand-50',
+                'message' => "{$listing->user->name} {$verb} « {$listing->title} ».",
+                'url'     => "/livres/{$listing->id}",
+            ]));
+        }
     }
 
     /** Notifie les membres dont une annonce « recherche » correspond au livre publié. */
