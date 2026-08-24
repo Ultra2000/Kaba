@@ -112,15 +112,13 @@ const romanPrice = (l) => {
             </div>
         </section>
 
-        <!-- Recommandés -->
+        <!-- Recommandés (sur planche) -->
         <section class="max-w-[1400px] mx-auto px-4 mt-10">
             <div class="flex items-end justify-between border-b border-gray-200 pb-4 mb-8">
                 <h2 class="text-2xl md:text-3xl font-black text-dark">Les best-sellers</h2>
                 <Link href="/explorer" class="text-sm font-bold text-gray-500 hover:text-brand-600 shrink-0">Plus de livres →</Link>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-5 gap-y-10 md:gap-x-8">
-                <BookCard v-for="l in featured" :key="l.id" :listing="l" />
-            </div>
+            <CategoryShelf :books="featured" />
         </section>
 
         <!-- Catégories (une seule ligne défilante) -->

@@ -29,8 +29,8 @@ function onErr(e, l) { e.target.onerror = null; e.target.src = placeholder(l); }
 
 <template>
     <div class="flex flex-col md:flex-row gap-6 md:gap-8 items-center">
-        <!-- Colonne info -->
-        <div class="w-full md:w-52 shrink-0 md:text-left">
+        <!-- Colonne info (optionnelle : absente si pas de titre) -->
+        <div v-if="title" class="w-full md:w-52 shrink-0 md:text-left">
             <div class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center text-xl mb-3">
                 <i class="fa-solid" :class="icon"></i>
             </div>
