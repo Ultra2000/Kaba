@@ -147,6 +147,21 @@ class OrderController extends Controller
         abort_unless($order->status === 'accepted', 422);
 
         $order->update(['status' => 'completed']);
+
+        // Chaque livre remis sort du stock ; l'annonce passe « vendu »
+        // seulement quand il ne reste plus d'exemplaire.
+        foreach ($order->items()->where('status', 'accepted')->with('listing')->get() as $item) {
+            $listing = $item->listing;
+            if (! $listing || $listing->status !== 'active') {
+                continue;
+            }
+            $remaining = max(0, ($listing->quantity ?? 1) - 1);
+            $listing->update([
+                'quantity' => $remaining,
+                'status'   => $remaining > 0 ? 'active' : 'sold',
+            ]);
+        }
+
         $order->buyer->notify(new KabaNotification([
             'icon'    => 'fa-handshake',
             'color'   => 'brand',

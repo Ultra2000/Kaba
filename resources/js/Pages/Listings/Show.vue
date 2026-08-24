@@ -81,7 +81,8 @@ const initials = computed(() => (u.value?.name || '').split(/\s+/).map(w => w[0]
             <div class="grid lg:grid-cols-2 gap-8 lg:gap-12">
                 <!-- Image -->
                 <div class="bg-gray-50 rounded-2xl border border-gray-100 p-6 flex items-center justify-center relative">
-                    <span v-if="listing.type === 'vente'" class="absolute top-4 left-4 bg-brand-600 text-white text-xs font-black px-3 py-1.5 rounded-md shadow-sm uppercase tracking-wider">Occasion</span>
+                    <span v-if="listing.status === 'sold'" class="absolute top-4 left-4 bg-dark text-white text-xs font-black px-3 py-1.5 rounded-md shadow-sm uppercase tracking-wider">{{ listing.type === 'don' ? 'Déjà donné' : 'Vendu' }}</span>
+                    <span v-else-if="listing.type === 'vente'" class="absolute top-4 left-4 bg-brand-600 text-white text-xs font-black px-3 py-1.5 rounded-md shadow-sm uppercase tracking-wider">Occasion</span>
                     <span v-else-if="listing.type === 'don'" class="absolute top-4 left-4 bg-orange-500 text-white text-xs font-black px-3 py-1.5 rounded-md shadow-sm uppercase tracking-wider">Don solidaire</span>
                     <span v-else-if="listing.type === 'echange'" class="absolute top-4 left-4 bg-blue-500 text-white text-xs font-black px-3 py-1.5 rounded-md shadow-sm uppercase tracking-wider">À échanger</span>
                     <span v-else class="absolute top-4 left-4 bg-green-600 text-white text-xs font-black px-3 py-1.5 rounded-md shadow-sm uppercase tracking-wider">Recherché</span>
@@ -121,11 +122,14 @@ const initials = computed(() => (u.value?.name || '').split(/\s+/).map(w => w[0]
 
                     <!-- Actions -->
                     <div class="flex flex-col sm:flex-row gap-3 mb-6">
-                        <Link v-if="!isOwner && listing.type !== 'recherche' && inCart" href="/panier"
+                        <div v-if="listing.status === 'sold'" class="flex-1 bg-gray-100 text-gray-500 px-6 py-4 rounded-full font-bold flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-circle-check"></i> {{ listing.type === 'don' ? 'Ce livre a déjà été donné' : 'Ce livre a été vendu' }}
+                        </div>
+                        <Link v-else-if="!isOwner && listing.type !== 'recherche' && inCart" href="/panier"
                               class="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-full font-bold shadow-floating transition-all flex items-center justify-center gap-2">
                             <i class="fa-solid fa-circle-check"></i> Dans le panier — voir
                         </Link>
-                        <button v-else-if="!isOwner && listing.type !== 'recherche'" @click="addToCart"
+                        <button v-else-if="!isOwner && listing.type !== 'recherche' && listing.status === 'active'" @click="addToCart"
                                 class="flex-1 bg-brand-600 hover:bg-brand-700 text-white px-6 py-4 rounded-full font-bold shadow-floating transition-all active:scale-95 flex items-center justify-center gap-2">
                             <i class="fa-solid fa-basket-shopping"></i> Ajouter au panier
                         </button>

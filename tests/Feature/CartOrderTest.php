@@ -243,6 +243,35 @@ class CartOrderTest extends TestCase
         $this->actingAs($other)->post("/demandes/{$order->id}/discuter")->assertForbidden();
     }
 
+    public function test_completed_order_marks_single_copy_listing_sold(): void
+    {
+        $seller = User::factory()->create();
+        $buyer = User::factory()->create();
+        $single = $this->makeListing($seller, ['title' => 'Exemplaire unique', 'quantity' => 1]);
+        $multi  = $this->makeListing($seller, ['title' => 'Trois exemplaires', 'quantity' => 3]);
+        $refused = $this->makeListing($seller, ['title' => 'Refusé', 'quantity' => 1]);
+
+        foreach ([$single, $multi, $refused] as $l) {
+            $this->actingAs($buyer)->post("/panier/{$l->id}");
+        }
+        $this->actingAs($buyer)->post("/demandes/vendeur/{$seller->id}");
+        $order = Order::first();
+
+        // Le vendeur refuse un livre puis accepte le reste.
+        $refusedItem = $order->items()->where('listing_id', $refused->id)->first();
+        $this->actingAs($seller)->post("/demandes/{$order->id}/livres/{$refusedItem->id}/refuser");
+        $this->actingAs($seller)->post("/demandes/{$order->id}/accepter");
+        $this->actingAs($seller)->post("/demandes/{$order->id}/remise");
+
+        // Exemplaire unique → vendu ; multi-exemplaires → toujours actif, stock -1 ; refusé → intact.
+        $this->assertSame('sold', $single->fresh()->status);
+        $this->assertSame(0, $single->fresh()->quantity);
+        $this->assertSame('active', $multi->fresh()->status);
+        $this->assertSame(2, $multi->fresh()->quantity);
+        $this->assertSame('active', $refused->fresh()->status);
+        $this->assertSame(1, $refused->fresh()->quantity);
+    }
+
     public function test_orders_page_renders(): void
     {
         $user = User::factory()->create();
