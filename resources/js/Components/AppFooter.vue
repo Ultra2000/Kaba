@@ -28,7 +28,8 @@ import { Link } from '@inertiajs/vue3';
                     <div class="flex gap-4">
                         <a href="#" class="text-gray-400 hover:text-brand-600 text-xl transition-colors"><i class="fa-brands fa-instagram"></i></a>
                         <a href="#" class="text-gray-400 hover:text-brand-600 text-xl transition-colors"><i class="fa-brands fa-facebook"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-brand-600 text-xl transition-colors"><i class="fa-brands fa-linkedin"></i></a>
+                        <a href="https://www.linkedin.com/in/fr%C3%A9jus-bouraima/" target="_blank" rel="noopener noreferrer"
+                           class="text-gray-400 hover:text-brand-600 text-xl transition-colors" title="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
                     </div>
                 </div>
                 <div>

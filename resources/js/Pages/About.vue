@@ -77,11 +77,16 @@ defineProps({ stats: Object });
 
                 <!-- Signature -->
                 <div class="flex items-center gap-3 px-6 md:px-8 py-4 bg-gray-50/70 border-t border-gray-100">
-                    <span class="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-black text-sm shrink-0">K</span>
-                    <div>
-                        <p class="font-bold text-dark text-sm">Le fondateur de KABA</p>
-                        <p class="text-xs text-gray-400">Cotonou · Bénin</p>
+                    <span class="w-11 h-11 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-black shrink-0 ring-2 ring-white">FB</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-dark text-sm">Oladé Fréjus BOURAIMA</p>
+                        <p class="text-xs text-gray-400">Fondateur de KABA</p>
                     </div>
+                    <a href="https://www.linkedin.com/in/fr%C3%A9jus-bouraima/" target="_blank" rel="noopener noreferrer"
+                       class="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-brand-600 hover:bg-white transition-colors shrink-0"
+                       title="Profil LinkedIn de Oladé Fréjus BOURAIMA">
+                        <i class="fa-brands fa-linkedin text-lg"></i>
+                    </a>
                 </div>
             </section>
 
