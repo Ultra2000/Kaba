@@ -38,19 +38,51 @@ defineProps({ stats: Object });
                 </div>
             </div>
 
-            <!-- Le problème -->
-            <section class="bg-white rounded-2xl border border-gray-100 shadow-soft p-6 md:p-8">
-                <h2 class="font-black text-dark text-xl mb-4">Pourquoi KABA ?</h2>
-                <p class="text-gray-600 leading-relaxed mb-4">
-                    Au Bénin, le prix du livre neuf reste un frein réel : un manuel universitaire peut
-                    représenter une part importante du budget d'un étudiant. En parallèle, des milliers
-                    d'ouvrages dorment dans les foyers après avoir été lus une seule fois.
-                </p>
-                <p class="text-gray-600 leading-relaxed">
-                    KABA met les deux en relation. Celui qui n'a plus besoin d'un livre le vend, le donne
-                    ou l'échange ; celui qui en a besoin le trouve près de chez lui, à un prix abordable.
-                    Rien ne se perd, tout se transmet.
-                </p>
+            <!-- L'histoire, racontée par le fondateur -->
+            <section id="histoire" class="scroll-mt-24 bg-white rounded-2xl border border-gray-100 shadow-soft overflow-hidden">
+                <div class="p-6 md:p-8">
+                    <span class="inline-block text-brand-600 font-bold text-xs uppercase tracking-wider mb-2">Notre histoire</span>
+                    <h2 class="font-black text-dark text-xl mb-5">Comment KABA est né</h2>
+
+                    <div class="space-y-4 text-gray-600 leading-relaxed border-l-2 border-brand-100 pl-5">
+                        <p>
+                            Étudiant au Bénin, j'ai longtemps buté sur un problème tout bête : mettre la main
+                            sur les livres dont j'avais besoin. Les bibliothèques avaient de bonnes ressources,
+                            mais on empruntait avec un délai de retour — et dès qu'il fallait reconsulter un
+                            ouvrage quelques semaines plus tard, il fallait y retourner. Certains titres, eux,
+                            ne se trouvaient nulle part ailleurs que sur Amazon.
+                        </p>
+                        <p>
+                            En arrivant en France, j'ai découvert autre chose : des structures solidaires et
+                            des librairies d'occasion où un livre s'obtient pour quelques euros, parfois
+                            gratuitement. Le contraste m'a frappé.
+                        </p>
+                        <p>
+                            La première idée de KABA est née là : acheter des livres dans ces structures
+                            solidaires et les renvoyer au pays pour les rendre accessibles.
+                        </p>
+                        <p class="text-dark font-medium">
+                            Puis j'ai repensé à mes propres livres. Ceux que j'avais achetés, qui ne me
+                            servaient plus, et qui ont fini à la poubelle. Nous sommes des milliers dans
+                            ce cas. Il y avait bien plus simple que de faire venir des livres de loin :
+                            relier ceux qui ont des livres qui dorment à ceux qui en cherchent, ici même.
+                        </p>
+                        <p>
+                            C'est ce que fait KABA. Vendre, donner, échanger — peu importe la forme,
+                            l'essentiel est qu'un livre déjà lu reparte entre les mains de quelqu'un,
+                            au lieu d'être jeté ou racheté neuf.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Signature -->
+                <div class="flex items-center gap-3 px-6 md:px-8 py-4 bg-gray-50/70 border-t border-gray-100">
+                    <span class="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-black text-sm shrink-0">K</span>
+                    <div>
+                        <p class="font-bold text-dark text-sm">Le fondateur de KABA</p>
+                        <p class="text-xs text-gray-400">Cotonou · Bénin</p>
+                    </div>
+                </div>
             </section>
 
             <!-- Notre impact -->
