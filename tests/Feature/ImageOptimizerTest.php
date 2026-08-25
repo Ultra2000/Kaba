@@ -103,8 +103,23 @@ class ImageOptimizerTest extends TestCase
         $path = app(ImageOptimizer::class)->store($this->realPhoto(2000, 1500));
         $binary = Storage::disk('public')->get($path);
 
-        // Les coordonnées GPS du domicile ne doivent pas survivre à la conversion.
-        $this->assertStringNotContainsString('GPS', $binary);
-        $this->assertStringNotContainsString('Exif', $binary);
+        // Un WebP est un conteneur RIFF : on parcourt ses blocs et on vérifie
+        // qu'aucun ne transporte de métadonnées (les EXIF d'un téléphone
+        // contiennent les coordonnées GPS du lieu de prise de vue).
+        $this->assertSame('RIFF', substr($binary, 0, 4));
+        $this->assertSame('WEBP', substr($binary, 8, 4));
+
+        $chunks = [];
+        $offset = 12;
+        $length = strlen($binary);
+        while ($offset + 8 <= $length) {
+            $fourcc = substr($binary, $offset, 4);
+            $size = unpack('V', substr($binary, $offset + 4, 4))[1];
+            $chunks[] = $fourcc;
+            $offset += 8 + $size + ($size % 2); // les blocs sont alignés sur un octet pair
+        }
+
+        $this->assertNotContains('EXIF', $chunks, 'Le fichier transporte encore des métadonnées EXIF.');
+        $this->assertNotContains('XMP ', $chunks, 'Le fichier transporte encore des métadonnées XMP.');
     }
 }

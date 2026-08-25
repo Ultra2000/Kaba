@@ -35,7 +35,7 @@ class ListingController extends Controller
 
         return Inertia::render('Listings/Explore', [
             'listings'   => $listings,
-            'categories' => Category::orderBy('name')->get(['name', 'slug']),
+            'categories' => Category::browsable()->orderBy('name')->get(['name', 'slug']),
             'cities'     => $this->cities(),
             'conditions' => Listing::CONDITIONS,
             'languages'  => $this->languages(),

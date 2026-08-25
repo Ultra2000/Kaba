@@ -94,6 +94,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     Route::get('/utilisateurs', [\App\Http\Controllers\Admin\AdminController::class, 'users'])->name('users');
     Route::post('/utilisateurs/{user}/verifier', [\App\Http\Controllers\Admin\AdminController::class, 'toggleUserVerified'])->name('users.verify');
+    Route::post('/utilisateurs', [\App\Http\Controllers\Admin\AdminController::class, 'storeUser'])->name('users.store');
+    Route::post('/utilisateurs/{user}/statut', [\App\Http\Controllers\Admin\AdminController::class, 'updateUserRole'])->name('users.role');
 
     Route::get('/categories', [\App\Http\Controllers\Admin\AdminController::class, 'categories'])->name('categories');
     Route::post('/categories', [\App\Http\Controllers\Admin\AdminController::class, 'storeCategory'])->name('categories.store');

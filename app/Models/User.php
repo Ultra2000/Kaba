@@ -104,6 +104,13 @@ class User extends Authenticatable
         return $this->hasMany(Order::class, 'seller_id');
     }
 
+    /** Statuts d'un membre, du plus courant au plus élevé. */
+    public const ROLES = [
+        'user'  => 'Membre',
+        'pro'   => 'Vendeur pro',
+        'admin' => 'Administrateur',
+    ];
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';

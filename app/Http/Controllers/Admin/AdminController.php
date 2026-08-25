@@ -10,6 +10,7 @@ use App\Models\Review;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -107,13 +108,67 @@ class AdminController extends Controller
     {
         $users = User::withCount('listings')->latest()->get(['id', 'name', 'email', 'role', 'city', 'is_verified', 'created_at']);
 
-        return Inertia::render('Admin/Users', ['users' => $users]);
+        return Inertia::render('Admin/Users', [
+            'users' => $users,
+            'roles' => User::ROLES,
+        ]);
     }
 
     public function toggleUserVerified(User $user): RedirectResponse
     {
         $user->update(['is_verified' => ! $user->is_verified]);
         return back();
+    }
+
+    /** Crée un compte depuis l'administration (amorçage, comptes pro, équipe). */
+    public function storeUser(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name'        => 'required|string|max:100',
+            'email'       => 'required|email|max:150|unique:users,email',
+            'password'    => 'required|string|min:8',
+            'role'        => 'required|in:' . implode(',', array_keys(User::ROLES)),
+            'city'        => 'nullable|string|max:100',
+            'phone'       => 'nullable|string|max:30',
+            'is_verified' => 'boolean',
+        ]);
+
+        $user = User::create([
+            'name'        => $data['name'],
+            'email'       => $data['email'],
+            'password'    => Hash::make($data['password']),
+            'role'        => $data['role'],
+            'city'        => $data['city'] ?? null,
+            'phone'       => $data['phone'] ?? null,
+            'is_verified' => $data['is_verified'] ?? false,
+        ]);
+
+        // Compte créé par un administrateur : l'adresse est considérée validée.
+        // (email_verified_at n'est pas assignable en masse, d'où le forceFill.)
+        $user->forceFill(['email_verified_at' => now()])->save();
+
+        return back()->with('success', 'Compte créé.');
+    }
+
+    /** Change le statut d'un membre (utilisateur, vendeur pro, administrateur). */
+    public function updateUserRole(Request $request, User $user): RedirectResponse
+    {
+        $data = $request->validate([
+            'role' => 'required|in:' . implode(',', array_keys(User::ROLES)),
+        ]);
+
+        // Garde-fou : ne jamais se retirer soi-même les droits, ni supprimer
+        // le dernier administrateur — on se retrouverait enfermé dehors.
+        if ($user->id === $request->user()->id && $data['role'] !== 'admin') {
+            return back()->withErrors(['role' => 'Vous ne pouvez pas retirer vos propres droits d\'administrateur.']);
+        }
+        if ($user->role === 'admin' && $data['role'] !== 'admin' && User::where('role', 'admin')->count() <= 1) {
+            return back()->withErrors(['role' => 'Il doit rester au moins un administrateur.']);
+        }
+
+        $user->update(['role' => $data['role']]);
+
+        return back()->with('success', 'Statut mis à jour.');
     }
 
     /* ---------------- Catégories ---------------- */

@@ -10,6 +10,24 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Listing extends Model
 {
+    /**
+     * La liste des catégories affichées dans la navigation dépend des annonces
+     * existantes : on invalide son cache dès qu'une annonce bouge, sinon une
+     * catégorie qui reçoit son premier livre resterait masquée jusqu'à une heure.
+     */
+    protected static function booted(): void
+    {
+        $forget = fn () => \Illuminate\Support\Facades\Cache::forget('nav.categories');
+
+        static::created($forget);
+        static::deleted($forget);
+        static::updated(function (self $listing) use ($forget) {
+            if ($listing->wasChanged(['status', 'category_id', 'type'])) {
+                $forget();
+            }
+        });
+    }
+
     protected $fillable = [
         'user_id', 'category_id', 'title', 'author', 'isbn', 'language',
         'publisher', 'year', 'condition', 'description', 'price', 'old_price', 'type',
