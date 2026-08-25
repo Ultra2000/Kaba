@@ -43,37 +43,11 @@ const onImageError = (slug) => failedImages.add(slug);
                     </div>
                 </div>
 
-                <!-- Illustration téléphone -->
-                <div class="absolute right-0 bottom-0 top-0 w-1/2 hidden lg:flex justify-end items-end pr-16 pb-8">
-                    <div class="w-64 h-[450px] bg-white rounded-[2.5rem] shadow-2xl border-[12px] border-dark relative rotate-6 translate-y-12 flex flex-col overflow-hidden">
-                        <div class="absolute top-0 w-full h-6 flex justify-center z-20">
-                            <div class="w-1/3 h-full bg-dark rounded-b-xl"></div>
-                        </div>
-                        <div class="bg-gray-50 flex-1 p-4 pt-8">
-                            <div class="font-bold text-sm mb-4">Mes annonces</div>
-                            <div class="space-y-3">
-                                <div class="bg-white p-3 rounded-xl shadow-sm flex gap-3 items-center">
-                                    <div class="w-10 h-14 bg-gray-200 rounded"></div>
-                                    <div class="flex-1">
-                                        <div class="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
-                                        <div class="h-2 bg-gray-200 rounded w-1/2"></div>
-                                    </div>
-                                    <div class="text-brand-600 font-bold text-sm">3000 F</div>
-                                </div>
-                                <div class="bg-white p-3 rounded-xl shadow-sm flex gap-3 items-center opacity-70">
-                                    <div class="w-10 h-14 bg-gray-200 rounded"></div>
-                                    <div class="flex-1">
-                                        <div class="h-3 bg-gray-200 rounded w-full mb-2"></div>
-                                        <div class="h-2 bg-gray-200 rounded w-2/3"></div>
-                                    </div>
-                                    <div class="text-orange-500 font-bold uppercase text-[10px]">Don</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="absolute right-64 bottom-24 w-32 h-32 text-brand-600 opacity-20">
-                        <i class="fa-solid fa-book-open text-9xl -rotate-12"></i>
-                    </div>
+                <!-- Illustration : étagère KABA -->
+                <div class="absolute right-0 bottom-0 top-0 w-[55%] hidden lg:flex justify-end items-center pr-6 xl:pr-10">
+                    <img src="/images/hero-image.webp" alt="Une pile de livres d'occasion sur une étagère"
+                         width="1240" height="821" fetchpriority="high" decoding="async"
+                         class="w-full max-w-[620px] h-auto object-contain drop-shadow-2xl">
                 </div>
             </div>
 
