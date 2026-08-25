@@ -52,6 +52,41 @@ class ListingStoreTest extends TestCase
         $this->assertDatabaseCount('listing_photos', 2);
     }
 
+    public function test_listing_page_receives_all_condition_photos_in_order(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+        $category = Category::create(['name' => 'Romans', 'slug' => 'roman', 'icon' => 'fa-feather-pointed']);
+
+        $this->actingAs($user)->post('/livres', [
+            'type'        => 'vente',
+            'title'       => 'Livre avec défauts',
+            'category_id' => $category->id,
+            'condition'   => 'moyen',
+            'language'    => 'Français',
+            'city'        => 'Cotonou',
+            'price'       => 1500,
+            'photos'      => [
+                UploadedFile::fake()->image('couverture.jpg'),
+                UploadedFile::fake()->image('tranche.jpg'),
+                UploadedFile::fake()->image('page-cornee.jpg'),
+            ],
+        ]);
+
+        $listing = \App\Models\Listing::firstWhere('title', 'Livre avec défauts');
+        $this->assertSame(3, $listing->photos()->count());
+
+        // La fiche reçoit bien les 3 photos, dans l'ordre d'envoi (galerie).
+        $this->get("/livres/{$listing->id}")
+            ->assertOk()
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->component('Listings/Show')
+                ->has('listing.photos', 3)
+                ->where('listing.photos.0.position', 0)
+                ->where('listing.photos.2.position', 2));
+    }
+
     public function test_price_is_required_for_a_sale(): void
     {
         $user = User::factory()->create();

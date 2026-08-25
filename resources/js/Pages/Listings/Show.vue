@@ -56,8 +56,12 @@ const COVERS = ['7c3aed','f59e0b','10b981','ef4444','3b82f6','6d28d9','db2777','
 const color = computed(() => COVERS[props.listing.id % COVERS.length]);
 const fallback = computed(() => `https://placehold.co/400x600/${color.value}/ffffff?text=${encodeURIComponent(props.listing.title.slice(0,22))}`);
 const photos = computed(() => props.listing.photos ?? []);
+const photoUrl = (p) => p.url ?? `/storage/${p.path}`;
+
+// Galerie : la photo affichée parmi celles envoyées par le vendeur.
+const activePhoto = ref(0);
 const cover = computed(() => photos.value.length
-    ? photos.value[0].url ?? `/storage/${photos.value[0].path}`
+    ? photoUrl(photos.value[Math.min(activePhoto.value, photos.value.length - 1)])
     : (props.listing.isbn ? `https://covers.openlibrary.org/b/isbn/${props.listing.isbn}-L.jpg?default=false` : fallback.value));
 function onError(e) { e.target.onerror = null; e.target.src = fallback.value; }
 
@@ -79,7 +83,8 @@ const initials = computed(() => (u.value?.name || '').split(/\s+/).map(w => w[0]
             </nav>
 
             <div class="grid lg:grid-cols-2 gap-8 lg:gap-12">
-                <!-- Image -->
+                <!-- Image + galerie -->
+                <div>
                 <div class="bg-gray-50 rounded-2xl border border-gray-100 p-6 flex items-center justify-center relative">
                     <span v-if="listing.status === 'sold'" class="absolute top-4 left-4 bg-dark text-white text-xs font-black px-3 py-1.5 rounded-md shadow-sm uppercase tracking-wider">{{ listing.type === 'don' ? 'Déjà donné' : 'Vendu' }}</span>
                     <span v-else-if="listing.type === 'vente'" class="absolute top-4 left-4 bg-brand-600 text-white text-xs font-black px-3 py-1.5 rounded-md shadow-sm uppercase tracking-wider">Occasion</span>
@@ -87,6 +92,27 @@ const initials = computed(() => (u.value?.name || '').split(/\s+/).map(w => w[0]
                     <span v-else-if="listing.type === 'echange'" class="absolute top-4 left-4 bg-blue-500 text-white text-xs font-black px-3 py-1.5 rounded-md shadow-sm uppercase tracking-wider">À échanger</span>
                     <span v-else class="absolute top-4 left-4 bg-green-600 text-white text-xs font-black px-3 py-1.5 rounded-md shadow-sm uppercase tracking-wider">Recherché</span>
                     <img :src="cover" @error="onError" :alt="listing.title" class="max-h-[460px] rounded-lg shadow-lg">
+
+                    <!-- Compteur de photos -->
+                    <span v-if="photos.length > 1" class="absolute bottom-4 right-4 bg-black/60 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                        {{ activePhoto + 1 }} / {{ photos.length }}
+                    </span>
+                </div>
+
+                <!-- Miniatures : montrent l'état réel du livre -->
+                <div v-if="photos.length > 1" class="mt-3">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                        <i class="fa-solid fa-images"></i> Photos de l'état du livre
+                    </p>
+                    <div class="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                        <button v-for="(p, i) in photos" :key="p.id ?? i" type="button" @click="activePhoto = i"
+                                class="shrink-0 w-16 h-20 rounded-lg overflow-hidden border-2 transition-all"
+                                :class="i === activePhoto ? 'border-brand-600 ring-2 ring-brand-200' : 'border-gray-200 hover:border-brand-300 opacity-80 hover:opacity-100'"
+                                :aria-label="`Photo ${i + 1}`">
+                            <img :src="photoUrl(p)" :alt="`${listing.title} — photo ${i + 1}`" loading="lazy" class="w-full h-full object-cover">
+                        </button>
+                    </div>
+                </div>
                 </div>
 
                 <!-- Infos -->

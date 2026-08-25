@@ -27,11 +27,23 @@ const form = useForm({
 });
 
 const previews = ref([]);
+const MAX_PHOTOS = 10;
 
 function onPhotos(e) {
-    const files = Array.from(e.target.files).slice(0, 10);
-    form.photos = files;
-    previews.value = files.map((f) => URL.createObjectURL(f));
+    // On ajoute aux photos déjà choisies (au lieu de les remplacer).
+    const incoming = Array.from(e.target.files);
+    const room = MAX_PHOTOS - form.photos.length;
+    const files = incoming.slice(0, Math.max(0, room));
+
+    form.photos = [...form.photos, ...files];
+    previews.value = [...previews.value, ...files.map((f) => URL.createObjectURL(f))];
+    e.target.value = ''; // permet de re-sélectionner le même fichier
+}
+
+function removePhoto(i) {
+    URL.revokeObjectURL(previews.value[i]);
+    form.photos = form.photos.filter((_, idx) => idx !== i);
+    previews.value = previews.value.filter((_, idx) => idx !== i);
 }
 
 function submit() {
@@ -73,14 +85,26 @@ const TYPES = [
 
                 <!-- Photos -->
                 <div class="bg-white rounded-2xl border border-gray-200 p-6">
-                    <h2 class="font-bold text-dark mb-4">Photos <span class="text-gray-400 font-medium text-sm">(jusqu'à 10)</span></h2>
+                    <h2 class="font-bold text-dark mb-1">Photos <span class="text-gray-400 font-medium text-sm">({{ form.photos.length }}/10)</span></h2>
+                    <p class="text-sm text-gray-500 mb-4">
+                        Montrez l'état réel du livre : la couverture, la tranche, quelques pages,
+                        et les éventuels défauts (annotations, pages cornées…). Les annonces avec
+                        plusieurs photos inspirent plus confiance.
+                    </p>
                     <div class="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                        <label class="aspect-square rounded-xl border-2 border-dashed border-brand-300 bg-brand-50 flex flex-col items-center justify-center text-brand-600 cursor-pointer hover:bg-brand-100 transition-colors">
+                        <label v-if="form.photos.length < 10"
+                               class="aspect-square rounded-xl border-2 border-dashed border-brand-300 bg-brand-50 flex flex-col items-center justify-center text-brand-600 cursor-pointer hover:bg-brand-100 transition-colors">
                             <i class="fa-solid fa-camera text-xl mb-1"></i><span class="text-[11px] font-bold">Ajouter</span>
                             <input type="file" accept="image/*" multiple class="hidden" @change="onPhotos">
                         </label>
-                        <div v-for="(src, i) in previews" :key="i" class="aspect-square rounded-xl overflow-hidden border border-gray-200">
+                        <div v-for="(src, i) in previews" :key="i" class="relative group aspect-square rounded-xl overflow-hidden border border-gray-200">
                             <img :src="src" class="w-full h-full object-cover">
+                            <span v-if="i === 0" class="absolute bottom-0 inset-x-0 bg-brand-600/90 text-white text-[10px] font-bold text-center py-0.5">Principale</span>
+                            <button type="button" @click="removePhoto(i)"
+                                    class="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-red-500"
+                                    :aria-label="`Retirer la photo ${i + 1}`">
+                                <i class="fa-solid fa-xmark text-xs"></i>
+                            </button>
                         </div>
                     </div>
                     <p v-if="form.errors.photos" class="text-red-500 text-xs mt-2">{{ form.errors.photos }}</p>
