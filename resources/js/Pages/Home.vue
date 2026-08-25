@@ -45,9 +45,16 @@ const onImageError = (slug) => failedImages.add(slug);
 
                 <!-- Illustration : étagère KABA -->
                 <div class="absolute right-0 bottom-0 top-0 w-[55%] hidden lg:flex justify-end items-center pr-6 xl:pr-10">
-                    <img src="/images/hero-image.webp" alt="Une pile de livres d'occasion sur une étagère"
-                         width="1240" height="821" fetchpriority="high" decoding="async"
-                         class="w-full max-w-[620px] h-auto object-contain drop-shadow-2xl">
+                    <!-- L'illustration n'est visible qu'à partir de lg : le <source> évite
+                         que les mobiles la téléchargent inutilement (une image masquée
+                         reste chargée par le navigateur). -->
+                    <picture>
+                        <source media="(min-width: 1024px)" srcset="/images/hero-image.webp" type="image/webp">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E"
+                             alt="Une pile de livres d'occasion sur une étagère"
+                             width="1000" height="662" fetchpriority="high" decoding="async"
+                             class="w-full max-w-[620px] h-auto object-contain drop-shadow-2xl">
+                    </picture>
                 </div>
             </div>
 

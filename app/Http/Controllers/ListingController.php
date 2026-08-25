@@ -136,9 +136,12 @@ class ListingController extends Controller
         ]);
 
         if ($request->hasFile('photos')) {
+            $optimizer = app(\App\Services\ImageOptimizer::class);
             foreach ($request->file('photos') as $i => $file) {
-                $path = $file->store('listings', 'public');
-                $listing->photos()->create(['path' => $path, 'position' => $i]);
+                $listing->photos()->create([
+                    'path'     => $optimizer->store($file),
+                    'position' => $i,
+                ]);
             }
         }
 
