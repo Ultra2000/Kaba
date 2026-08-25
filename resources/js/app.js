@@ -22,6 +22,16 @@ createInertiaApp({
             .mount(el);
     },
     progress: {
-        color: '#4B5563',
+        color: '#7C3AED',
     },
 });
+
+// Service worker : rend KABA installable et consultable hors connexion.
+// Uniquement en HTTPS (ou en local), comme l'exige la spécification.
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {
+            // Un échec d'enregistrement ne doit jamais casser le site.
+        });
+    });
+}

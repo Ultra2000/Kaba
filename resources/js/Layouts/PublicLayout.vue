@@ -1,6 +1,7 @@
 <script setup>
 import AppHeader from '@/Components/AppHeader.vue';
 import AppFooter from '@/Components/AppFooter.vue';
+import InstallPrompt from '@/Components/InstallPrompt.vue';
 </script>
 
 <template>
@@ -10,5 +11,6 @@ import AppFooter from '@/Components/AppFooter.vue';
             <slot />
         </main>
         <AppFooter />
+        <InstallPrompt />
     </div>
 </template>
