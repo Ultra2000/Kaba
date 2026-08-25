@@ -9,6 +9,17 @@ const props = defineProps({
 
 const GROUPS = { today: "Aujourd'hui", week: 'Cette semaine', old: 'Plus ancien' };
 
+// La couleur stockée peut être un nom court ('brand') ou des classes Tailwind
+// complètes (anciennes notifications) — on accepte les deux.
+const COLOR_CLASSES = {
+    brand:  'text-brand-600 bg-brand-50',
+    green:  'text-green-600 bg-green-50',
+    red:    'text-red-600 bg-red-50',
+    orange: 'text-orange-600 bg-orange-50',
+    amber:  'text-amber-600 bg-amber-50',
+};
+const iconClass = (n) => COLOR_CLASSES[n.data?.color] ?? n.data?.color ?? 'text-gray-500 bg-gray-100';
+
 function groupOf(iso) {
     const d = new Date(iso);
     const now = new Date();
@@ -53,7 +64,7 @@ function markAll() {
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ g.label }}</p>
                     <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden divide-y divide-gray-50">
                         <Link v-for="n in g.items" :key="n.id" :href="n.data.url ?? '#'" class="flex gap-3 px-4 py-4 hover:bg-gray-50 transition-colors" :class="{ 'bg-brand-50/40': !n.read }">
-                            <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" :class="n.data.color">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" :class="iconClass(n)">
                                 <i class="fa-solid" :class="n.data.icon"></i>
                             </div>
                             <div class="flex-1 min-w-0">

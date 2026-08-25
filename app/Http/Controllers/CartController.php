@@ -16,14 +16,21 @@ class CartController extends Controller
             ->with(['user:id,name,city,rating_avg,is_verified', 'photos', 'category:id,slug'])
             ->get();
 
+        // Un livre vendu ou retiré entre-temps n'est plus demandable :
+        // on le signale au lieu de le proposer silencieusement.
+        [$available, $unavailable] = $items->partition(fn ($l) => $l->status === 'active');
+
         // Groupé par vendeur : une demande de disponibilité par vendeur.
-        $groups = $items->groupBy('user_id')->map(fn ($listings) => [
+        $groups = $available->groupBy('user_id')->map(fn ($listings) => [
             'seller' => $listings->first()->user,
             'items'  => $listings->values(),
             'total'  => $listings->where('type', 'vente')->sum('price'),
         ])->values();
 
-        return Inertia::render('Cart/Index', ['groups' => $groups]);
+        return Inertia::render('Cart/Index', [
+            'groups'      => $groups,
+            'unavailable' => $unavailable->values(),
+        ]);
     }
 
     public function add(Request $request, Listing $listing): RedirectResponse

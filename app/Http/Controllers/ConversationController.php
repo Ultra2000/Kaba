@@ -77,7 +77,7 @@ class ConversationController extends Controller
         $conversation->otherUser($me)->notify(new KabaNotification([
             'kind'    => 'message',
             'icon'    => 'fa-comment',
-            'color'   => 'text-brand-600 bg-brand-50',
+            'color'   => 'brand',
             'message' => "{$me->name} vous a envoyé un message.",
             'url'     => "/messagerie/{$conversation->id}",
         ]));
@@ -92,6 +92,10 @@ class ConversationController extends Controller
 
         return $me->conversations()
             ->with(['listing:id,title', 'buyer:id,name', 'seller:id,name', 'lastMessage'])
+            // Compté en une seule requête (évite un count() par conversation).
+            ->withCount(['messages as unread_count' => fn ($q) => $q
+                ->where('sender_id', '!=', $me->id)
+                ->whereNull('read_at')])
             ->orderByDesc('last_message_at')
             ->orderByDesc('id')
             ->get()
@@ -102,7 +106,7 @@ class ConversationController extends Controller
                     'other'   => ['name' => $other->name],
                     'listing' => $c->listing?->title,
                     'last'    => $c->lastMessage?->body,
-                    'unread'  => $c->messages()->where('sender_id', '!=', $me->id)->whereNull('read_at')->count(),
+                    'unread'  => (int) $c->unread_count,
                     'time'    => optional($c->last_message_at ?? $c->created_at)->format('d/m'),
                 ];
             });

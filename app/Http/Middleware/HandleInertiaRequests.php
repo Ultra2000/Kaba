@@ -50,6 +50,10 @@ class HandleInertiaRequests extends Middleware
                 'cart' => $request->user()
                     ? $request->user()->cartListings()->pluck('listings.id')
                     : [],
+                // Demandes reçues en attente de réponse (indicateur pour le vendeur).
+                'pendingOrders' => $request->user()
+                    ? $request->user()->ordersReceived()->where('status', 'pending')->count()
+                    : 0,
             ],
             'nav' => [
                 'categories' => Cache::remember('nav.categories', 3600, fn () =>

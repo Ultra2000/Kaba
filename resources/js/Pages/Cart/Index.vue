@@ -4,7 +4,8 @@ import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import PublicLayout from '@/Layouts/PublicLayout.vue';
 
 const props = defineProps({
-    groups: Array, // [{ seller, items, total }]
+    groups: Array,                                  // [{ seller, items, total }]
+    unavailable: { type: Array, default: () => [] }, // livres vendus/retirés entre-temps
 });
 
 const fmt = (n) => new Intl.NumberFormat('fr-FR').format(n) + ' F';
@@ -54,6 +55,20 @@ function onErr(e, l) {
 
             <h1 class="text-2xl md:text-3xl font-black text-dark mb-2">Mon panier</h1>
             <p class="text-gray-500 text-sm mb-8">Envoyez une demande de disponibilité à chaque vendeur — sans paiement en ligne, la remise se fait en main propre.</p>
+
+            <!-- Livres devenus indisponibles -->
+            <div v-if="unavailable.length" class="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                <p class="font-bold text-amber-800 text-sm mb-3">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    {{ unavailable.length > 1 ? 'Ces livres ne sont plus disponibles' : "Ce livre n'est plus disponible" }}
+                </p>
+                <ul class="space-y-2">
+                    <li v-for="l in unavailable" :key="l.id" class="flex items-center gap-3">
+                        <span class="flex-1 min-w-0 text-sm text-amber-900 line-through truncate">{{ l.title }}</span>
+                        <button @click="removeItem(l)" class="text-xs font-bold text-amber-700 hover:text-amber-900 underline shrink-0">Retirer</button>
+                    </li>
+                </ul>
+            </div>
 
             <!-- Vide -->
             <div v-if="!groups.length" class="text-center py-16 bg-white rounded-2xl border border-gray-100">

@@ -165,7 +165,7 @@ class ListingController extends Controller
             $follower->notify(new KabaNotification([
                 'kind'    => 'follow',
                 'icon'    => 'fa-user-group',
-                'color'   => 'text-brand-600 bg-brand-50',
+                'color'   => 'brand',
                 'message' => "{$listing->user->name} {$verb} « {$listing->title} ».",
                 'url'     => "/livres/{$listing->id}",
             ]));
@@ -191,7 +191,7 @@ class ListingController extends Controller
                 $search->user->notify(new KabaNotification([
                     'kind'    => 'recherche',
                     'icon'    => 'fa-magnifying-glass',
-                    'color'   => 'text-green-600 bg-green-50',
+                    'color'   => 'green',
                     'message' => "Le livre recherché « {$search->title} » vient d'être publié !",
                     'url'     => "/livres/{$listing->id}",
                 ]));

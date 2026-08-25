@@ -7,6 +7,7 @@ const user = computed(() => page.props.auth?.user);
 const unread = computed(() => page.props.auth?.unread ?? 0);
 const unreadMessages = computed(() => page.props.auth?.unreadMessages ?? 0);
 const cartCount = computed(() => (page.props.auth?.cart ?? []).length);
+const pendingOrders = computed(() => page.props.auth?.pendingOrders ?? 0);
 const categories = computed(() => page.props.nav?.categories ?? []);
 
 const open = ref(null);        // 'cat' | 'user' | null
@@ -93,8 +94,9 @@ onUnmounted(() => document.removeEventListener('click', onDocClick));
 
                     <!-- Connecté -->
                     <div v-if="user" class="relative" data-dd>
-                        <button @click="toggle('user')" class="flex items-center gap-2 h-11 pl-1 pr-2 rounded-full hover:bg-gray-100 transition-colors">
+                        <button @click="toggle('user')" class="relative flex items-center gap-2 h-11 pl-1 pr-2 rounded-full hover:bg-gray-100 transition-colors">
                             <span class="w-9 h-9 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-black text-sm ring-2 ring-white">{{ user.initials ?? user.name.slice(0,2).toUpperCase() }}</span>
+                            <span v-if="pendingOrders > 0" class="absolute top-0.5 left-7 w-3 h-3 rounded-full bg-amber-500 ring-2 ring-white" title="Demandes en attente"></span>
                             <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 hidden xl:block"></i>
                         </button>
                         <div v-show="open === 'user'" class="absolute right-0 top-full mt-3 w-56 bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden">
@@ -105,7 +107,10 @@ onUnmounted(() => document.removeEventListener('click', onDocClick));
                             <nav class="p-1.5 text-sm font-medium">
                                 <Link href="/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-brand-50 hover:text-brand-700"><i class="fa-solid fa-gauge-high w-4"></i> Tableau de bord</Link>
                                 <Link href="/favoris" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-brand-50 hover:text-brand-700"><i class="fa-solid fa-heart w-4"></i> Favoris</Link>
-                                <Link href="/demandes" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-brand-50 hover:text-brand-700"><i class="fa-solid fa-basket-shopping w-4"></i> Mes demandes</Link>
+                                <Link href="/demandes" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-brand-50 hover:text-brand-700">
+                                    <i class="fa-solid fa-basket-shopping w-4"></i> Mes demandes
+                                    <span v-if="pendingOrders > 0" class="ml-auto bg-amber-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">{{ pendingOrders }}</span>
+                                </Link>
                                 <Link href="/profile" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-brand-50 hover:text-brand-700"><i class="fa-solid fa-gear w-4"></i> Profil</Link>
                                 <Link v-if="user.role === 'admin'" href="/admin" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-brand-700 font-bold hover:bg-brand-50"><i class="fa-solid fa-shield-halved w-4"></i> Administration</Link>
                                 <div class="border-t border-gray-100 my-1"></div>

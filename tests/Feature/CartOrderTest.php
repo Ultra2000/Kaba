@@ -394,6 +394,72 @@ class CartOrderTest extends TestCase
                 ->has('reviewed', 1));
     }
 
+    public function test_deleting_a_listing_keeps_order_history(): void
+    {
+        $seller = User::factory()->create();
+        $buyer = User::factory()->create();
+        $a = $this->makeListing($seller, ['title' => 'Gardé', 'price' => 2000]);
+        $b = $this->makeListing($seller, ['title' => 'Supprimé', 'price' => 3000]);
+
+        $this->actingAs($buyer)->post("/panier/{$a->id}");
+        $this->actingAs($buyer)->post("/panier/{$b->id}");
+        $this->actingAs($buyer)->post("/demandes/vendeur/{$seller->id}");
+        $order = Order::first();
+        $this->assertSame(2, $order->items()->count());
+
+        // L'annonce disparaît (suppression admin) : la ligne de commande doit rester.
+        $b->delete();
+
+        $this->assertSame(2, $order->fresh()->items()->count(), "L'historique de commande a été amputé.");
+        $orphan = $order->items()->whereNull('listing_id')->first();
+        $this->assertNotNull($orphan);
+        $this->assertSame(3000, $orphan->price); // le prix convenu reste tracé
+    }
+
+    public function test_cart_separates_unavailable_listings(): void
+    {
+        $seller = User::factory()->create();
+        $buyer = User::factory()->create();
+        $ok = $this->makeListing($seller, ['title' => 'Disponible']);
+        $gone = $this->makeListing($seller, ['title' => 'Vendu entre-temps']);
+
+        $this->actingAs($buyer)->post("/panier/{$ok->id}");
+        $this->actingAs($buyer)->post("/panier/{$gone->id}");
+
+        // Un autre acheteur l'a acquis entre-temps.
+        $gone->update(['status' => 'sold', 'quantity' => 0]);
+
+        $this->actingAs($buyer)->get('/panier')
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Cart/Index')
+                ->has('groups', 1)
+                ->has('groups.0.items', 1)      // seul le livre encore actif est demandable
+                ->has('unavailable', 1));       // l'autre est signalé à part
+    }
+
+    public function test_pending_orders_badge_is_shared_to_seller(): void
+    {
+        $seller = User::factory()->create();
+        $buyer = User::factory()->create();
+        $listing = $this->makeListing($seller);
+
+        $this->actingAs($buyer)->post("/panier/{$listing->id}");
+        $this->actingAs($buyer)->post("/demandes/vendeur/{$seller->id}");
+
+        // Le vendeur voit l'indicateur, l'acheteur non.
+        $this->actingAs($seller)->get('/')
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('auth.pendingOrders', 1));
+        $this->actingAs($buyer)->get('/')
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('auth.pendingOrders', 0));
+
+        // Après réponse, l'indicateur retombe.
+        $order = Order::first();
+        $this->actingAs($seller)->post("/demandes/{$order->id}/accepter");
+        $this->actingAs($seller)->get('/')
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('auth.pendingOrders', 0));
+    }
+
     public function test_orders_page_renders(): void
     {
         $user = User::factory()->create();
