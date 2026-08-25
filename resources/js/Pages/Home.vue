@@ -51,13 +51,6 @@ const onImageError = (slug) => failedImages.add(slug);
                 </div>
             </div>
 
-            <!-- Points de pagination (décoratif) -->
-            <div class="flex justify-center gap-2 mt-6">
-                <button class="w-2.5 h-2.5 rounded-full bg-dark"></button>
-                <button class="w-2.5 h-2.5 rounded-full bg-gray-200 hover:bg-gray-300"></button>
-                <button class="w-2.5 h-2.5 rounded-full bg-gray-200 hover:bg-gray-300"></button>
-                <button class="w-2.5 h-2.5 rounded-full bg-gray-200 hover:bg-gray-300"></button>
-            </div>
         </section>
 
         <!-- Recommandés -->
