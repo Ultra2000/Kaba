@@ -44,18 +44,18 @@ import { Link } from '@inertiajs/vue3';
                 <div>
                     <h4 class="font-bold text-dark mb-4">À propos</h4>
                     <ul class="space-y-3 text-sm text-gray-600">
-                        <li><a href="#" class="hover:text-brand-600 transition-colors">Qui sommes-nous ?</a></li>
-                        <li><a href="#" class="hover:text-brand-600 transition-colors">Notre impact</a></li>
-                        <li><a href="#" class="hover:text-brand-600 transition-colors">Le blog</a></li>
-                        <li><a href="#" class="hover:text-brand-600 transition-colors">Presse</a></li>
+                        <li><Link href="/a-propos" class="hover:text-brand-600 transition-colors">Qui sommes-nous ?</Link></li>
+                        <li><Link href="/a-propos#impact" class="hover:text-brand-600 transition-colors">Notre impact</Link></li>
+                        <li><Link href="/explorer?type=don" class="hover:text-brand-600 transition-colors">Dons solidaires</Link></li>
+                        <li><Link href="/vendeurs" class="hover:text-brand-600 transition-colors">Nos vendeurs</Link></li>
                     </ul>
                 </div>
                 <div>
                     <h4 class="font-bold text-dark mb-4">Aide & Contact</h4>
                     <ul class="space-y-3 text-sm text-gray-600">
-                        <li><a href="#" class="hover:text-brand-600 transition-colors">Centre d'aide (FAQ)</a></li>
-                        <li><a href="#" class="hover:text-brand-600 transition-colors">Nous contacter</a></li>
-                        <li><a href="#" class="hover:text-brand-600 transition-colors">Sécurité des transactions</a></li>
+                        <li><Link href="/aide" class="hover:text-brand-600 transition-colors">Centre d'aide (FAQ)</Link></li>
+                        <li><Link href="/contact" class="hover:text-brand-600 transition-colors">Nous contacter</Link></li>
+                        <li><Link href="/securite" class="hover:text-brand-600 transition-colors">Sécurité des transactions</Link></li>
                     </ul>
                 </div>
             </div>
@@ -63,10 +63,9 @@ import { Link } from '@inertiajs/vue3';
             <div class="border-t border-gray-200 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-500">
                 <p>© 2026 KABA Bénin. Tous droits réservés.</p>
                 <div class="flex flex-wrap gap-4">
-                    <a href="#" class="hover:text-dark">CGV</a>
-                    <a href="#" class="hover:text-dark">CGU</a>
-                    <a href="#" class="hover:text-dark">Politique de confidentialité</a>
-                    <a href="#" class="hover:text-dark">Mentions légales</a>
+                    <Link href="/cgu" class="hover:text-dark">CGU</Link>
+                    <Link href="/confidentialite" class="hover:text-dark">Politique de confidentialité</Link>
+                    <Link href="/cgu#mentions" class="hover:text-dark">Mentions légales</Link>
                 </div>
             </div>
         </div>

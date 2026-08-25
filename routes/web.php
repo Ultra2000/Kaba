@@ -16,6 +16,16 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/explorer', [ListingController::class, 'index'])->name('listings.index');
 Route::get('/livres/{listing}', [ListingController::class, 'show'])->name('listings.show');
 
+// Pages d'information
+Route::get('/a-propos', [\App\Http\Controllers\PageController::class, 'about'])->name('pages.about');
+Route::get('/aide', [\App\Http\Controllers\PageController::class, 'faq'])->name('pages.faq');
+Route::get('/securite', [\App\Http\Controllers\PageController::class, 'security'])->name('pages.security');
+Route::get('/contact', [\App\Http\Controllers\PageController::class, 'contact'])->name('pages.contact');
+Route::post('/contact', [\App\Http\Controllers\PageController::class, 'sendContact'])
+    ->middleware('throttle:5,60')->name('pages.contact.send');
+Route::get('/cgu', [\App\Http\Controllers\PageController::class, 'terms'])->name('pages.terms');
+Route::get('/confidentialite', [\App\Http\Controllers\PageController::class, 'privacy'])->name('pages.privacy');
+
 // Vendeurs
 Route::get('/vendeurs', [SellerController::class, 'index'])->name('sellers.index');
 Route::get('/vendeurs/{user}', [SellerController::class, 'show'])->name('sellers.show');
