@@ -14,6 +14,7 @@ class HomeController extends Controller
         return Inertia::render('Home', [
             'featured' => Listing::with(['user:id,name', 'category:id,name,slug', 'photos'])
                 ->where('status', 'active')
+                ->where('type', '!=', 'recherche')
                 ->orderByDesc('views')
                 ->take(10)
                 ->get(),
@@ -21,6 +22,7 @@ class HomeController extends Controller
             'topRomans' => Listing::with(['photos', 'category:id,slug'])
                 ->whereHas('category', fn ($q) => $q->where('slug', 'roman'))
                 ->where('status', 'active')
+                ->where('type', '!=', 'recherche')
                 ->orderByDesc('rating')
                 ->orderByDesc('views')
                 ->take(4)
@@ -51,6 +53,7 @@ class HomeController extends Controller
             $books = Listing::with('photos')
                 ->where('category_id', $cat->id)
                 ->where('status', 'active')
+                ->where('type', '!=', 'recherche')
                 ->orderByDesc('views')
                 ->take(12)
                 ->get();

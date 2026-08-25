@@ -25,6 +25,17 @@ const cover = (l) => l.cover_url
     ? l.cover_url
     : (l.isbn ? `https://covers.openlibrary.org/b/isbn/${l.isbn}-L.jpg?default=false` : placeholder(l));
 function onErr(e, l) { e.target.onerror = null; e.target.src = placeholder(l); }
+
+// Étiquette de prix collée sur la couverture, façon librairie.
+const fmt = (n) => new Intl.NumberFormat('fr-FR').format(n);
+const priceTag = (l) => {
+    switch (l.type) {
+        case 'don':       return { text: 'Gratuit', class: 'bg-orange-500 text-white' };
+        case 'echange':   return { text: 'Échange', class: 'bg-sky-500 text-white' };
+        case 'recherche': return { text: 'Recherché', class: 'bg-green-600 text-white' };
+        default:          return { text: fmt(l.price) + ' F', class: 'bg-white text-dark' };
+    }
+};
 </script>
 
 <template>
@@ -51,6 +62,7 @@ function onErr(e, l) { e.target.onerror = null; e.target.src = placeholder(l); }
                  :class="books.length > 3 ? 'pr-14' : 'pr-1'"
                  class="flex items-end gap-6 md:gap-7 overflow-x-auto overflow-y-hidden pt-8 snap-x scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 <Link v-for="(b, i) in books" :key="b.id" :href="`/livres/${b.id}`"
+                      :title="`${b.title}${b.author ? ' — ' + b.author : ''} · ${priceTag(b).text}`"
                       class="group/book shrink-0 snap-start relative block origin-bottom transition-transform duration-300 ease-out hover:-translate-y-2.5">
                     <!-- Ombre de contact sur l'étagère -->
                     <div class="absolute inset-x-1 -bottom-1 h-2.5 bg-black/40 blur-md rounded-[50%]
@@ -65,6 +77,11 @@ function onErr(e, l) { e.target.onerror = null; e.target.src = placeholder(l); }
                         <div class="absolute inset-y-0 left-0 w-2.5 bg-gradient-to-r from-black/35 via-black/10 to-transparent"></div>
                         <!-- Reflet lumineux -->
                         <div class="absolute inset-y-0 left-2.5 w-[3px] bg-white/25"></div>
+                        <!-- Étiquette de prix, collée en bas comme en librairie -->
+                        <span class="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded text-[10px] md:text-[11px] font-black leading-none shadow-md ring-1 ring-black/10"
+                              :class="priceTag(b).class">
+                            {{ priceTag(b).text }}
+                        </span>
                     </div>
                 </Link>
                 <div v-if="!books.length" class="text-gray-400 text-sm py-16">Bientôt des livres ici.</div>
