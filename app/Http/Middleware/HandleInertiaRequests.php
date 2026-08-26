@@ -55,6 +55,15 @@ class HandleInertiaRequests extends Middleware
                     ? $request->user()->ordersReceived()->where('status', 'pending')->count()
                     : 0,
             ],
+            // Messages de confirmation après une action (back()->with('success', …)).
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+            ],
+            // Compteurs affichés dans le menu de l'administration.
+            'admin' => $request->user()?->isAdmin() ? [
+                'reports'         => \App\Models\Report::where('status', 'open')->count(),
+                'pendingListings' => \App\Models\Listing::where('status', 'pending')->count(),
+            ] : null,
             'nav' => [
                 'categories' => Cache::remember('nav.categories', 3600, fn () =>
                     Category::browsable()->orderBy('name')->get(['name', 'slug', 'icon', 'image'])),

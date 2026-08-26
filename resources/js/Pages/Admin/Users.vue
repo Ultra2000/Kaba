@@ -1,9 +1,23 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import AdminPagination from '@/Components/AdminPagination.vue';
 
-const props = defineProps({ users: Array, roles: Object });
+const props = defineProps({ users: Object, roles: Object, filters: Object, counts: Object });
+
+/* Recherche et filtre */
+const q = ref(props.filters?.q ?? '');
+let timer;
+watch(q, (v) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => applyFilters({ q: v }), 350);
+});
+function applyFilters(changes) {
+    router.get('/admin/utilisateurs', { ...props.filters, ...changes, page: 1 }, {
+        preserveState: true, preserveScroll: true, replace: true,
+    });
+}
 
 const page = usePage();
 const meId = page.props.auth?.user?.id;
@@ -43,7 +57,7 @@ function submit() {
 
 <template>
     <Head title="Admin — Utilisateurs" />
-    <AdminLayout title="Utilisateurs">
+    <AdminLayout title="Utilisateurs" :subtitle="`${counts.all} membres · ${counts.verified} vérifiés`">
         <!-- Création de compte -->
         <div class="mb-5">
             <button @click="showCreate = !showCreate"
@@ -114,21 +128,36 @@ function submit() {
             </form>
         </div>
 
+        <!-- Recherche -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-4 mb-4 flex flex-wrap gap-2">
+            <div class="relative flex-1 min-w-[200px]">
+                <i class="fa-solid fa-magnifying-glass text-gray-400 text-xs absolute left-3 top-1/2 -translate-y-1/2"></i>
+                <input v-model="q" type="search" placeholder="Nom, e-mail ou ville…"
+                       class="w-full h-9 pl-8 pr-3 rounded-lg border border-gray-200 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200">
+            </div>
+            <select :value="filters.role" @change="applyFilters({ role: $event.target.value })"
+                    class="h-9 px-3 rounded-lg border border-gray-200 text-sm bg-white outline-none focus:border-brand-500">
+                <option value="all">Tous les statuts</option>
+                <option v-for="(label, key) in roles" :key="key" :value="key">{{ label }}</option>
+            </select>
+        </div>
+
         <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full text-sm min-w-[760px]">
+                <table class="w-full text-sm min-w-[820px]">
                     <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
                         <tr>
                             <th class="text-left font-bold px-4 py-3">Utilisateur</th>
                             <th class="text-left font-bold px-4 py-3">Type</th>
                             <th class="text-left font-bold px-4 py-3">Ville</th>
                             <th class="text-left font-bold px-4 py-3">Annonces</th>
+                            <th class="text-left font-bold px-4 py-3">Note</th>
                             <th class="text-left font-bold px-4 py-3">Vérifié</th>
                             <th class="text-right font-bold px-4 py-3">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        <tr v-for="u in users" :key="u.id" class="hover:bg-gray-50">
+                        <tr v-for="u in users.data" :key="u.id" class="hover:bg-gray-50">
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-3">
                                     <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-black" :class="u.role === 'pro' || u.role === 'admin' ? 'bg-dark text-white' : 'bg-brand-100 text-brand-700'">{{ initials(u.name) }}</div>
@@ -147,7 +176,16 @@ function submit() {
                                 </select>
                             </td>
                             <td class="px-4 py-3 text-gray-500">{{ u.city || '—' }}</td>
-                            <td class="px-4 py-3 text-gray-600 font-medium">{{ u.listings_count }}</td>
+                            <td class="px-4 py-3">
+                                <span class="text-gray-600 font-medium">{{ u.listings_count }}</span>
+                                <span v-if="u.sales_count > 0" class="text-xs text-gray-400 block">{{ u.sales_count }} vente{{ u.sales_count > 1 ? 's' : '' }}</span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span v-if="u.rating_avg > 0" class="text-xs font-bold" :class="u.rating_avg < 3 ? 'text-red-500' : 'text-dark'">
+                                    <i class="fa-solid fa-star text-yellow-400"></i> {{ u.rating_avg }}
+                                </span>
+                                <span v-else class="text-xs text-gray-300">—</span>
+                            </td>
                             <td class="px-4 py-3">
                                 <span v-if="u.is_verified" class="text-blue-500 font-bold text-xs"><i class="fa-solid fa-circle-check"></i> Oui</span>
                                 <span v-else class="text-gray-400 text-xs">Non</span>
@@ -158,9 +196,14 @@ function submit() {
                                 </button>
                             </td>
                         </tr>
+                        <tr v-if="!users.data.length">
+                            <td colspan="7" class="px-4 py-12 text-center text-gray-400">Aucun membre ne correspond à cette recherche.</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
+
+            <AdminPagination :meta="users" />
         </div>
     </AdminLayout>
 </template>

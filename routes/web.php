@@ -97,6 +97,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/utilisateurs', [\App\Http\Controllers\Admin\AdminController::class, 'storeUser'])->name('users.store');
     Route::post('/utilisateurs/{user}/statut', [\App\Http\Controllers\Admin\AdminController::class, 'updateUserRole'])->name('users.role');
 
+    Route::get('/demandes', [\App\Http\Controllers\Admin\AdminController::class, 'orders'])->name('orders');
+
+    Route::get('/avis', [\App\Http\Controllers\Admin\AdminController::class, 'reviews'])->name('reviews');
+    Route::delete('/avis/{review}', [\App\Http\Controllers\Admin\AdminController::class, 'destroyReview'])->name('reviews.destroy');
+
     Route::get('/categories', [\App\Http\Controllers\Admin\AdminController::class, 'categories'])->name('categories');
     Route::post('/categories', [\App\Http\Controllers\Admin\AdminController::class, 'storeCategory'])->name('categories.store');
     Route::put('/categories/{category:id}', [\App\Http\Controllers\Admin\AdminController::class, 'updateCategory'])->name('categories.update');
@@ -120,3 +125,4 @@ if (app()->environment('local')) {
 }
 
 require __DIR__.'/auth.php';
+
