@@ -1,7 +1,6 @@
 <script setup>
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import PublicLayout from '@/Layouts/PublicLayout.vue';
-import BookCard from '@/Components/BookCard.vue';
 
 defineProps({
     stats: Object,
@@ -10,6 +9,27 @@ defineProps({
 
 const user = usePage().props.auth.user;
 const fmt = (n) => new Intl.NumberFormat('fr-FR').format(n);
+
+const STATUS = {
+    active:  { label: 'En ligne', class: 'bg-green-50 text-green-700 border-green-200' },
+    sold:    { label: 'Vendue', class: 'bg-gray-100 text-gray-600 border-gray-200' },
+    pending: { label: 'À valider', class: 'bg-amber-50 text-amber-700 border-amber-200' },
+    hidden:  { label: 'Masquée', class: 'bg-red-50 text-red-600 border-red-200' },
+};
+
+const priceLabel = (l) => {
+    if (l.type === 'don') return 'Don gratuit';
+    if (l.type === 'echange') return 'Échange';
+    if (l.type === 'recherche') return 'Recherche';
+    return fmt(l.price) + ' F';
+};
+
+const placeholder = (l) => `https://placehold.co/120x180/7c3aed/ffffff?text=${encodeURIComponent((l.title || '').slice(0, 12))}`;
+const cover = (l) => l.cover_url
+    || (l.isbn ? `https://covers.openlibrary.org/b/isbn/${l.isbn}-M.jpg?default=false` : placeholder(l));
+function onCoverError(e, l) { e.target.onerror = null; e.target.src = placeholder(l); }
+
+const toggleStatus = (l) => router.post(`/livres/${l.id}/statut`, {}, { preserveScroll: true });
 </script>
 
 <template>
@@ -72,8 +92,41 @@ const fmt = (n) => new Intl.NumberFormat('fr-FR').format(n);
                 <Link href="/explorer" class="text-sm font-bold text-brand-600 hover:underline">Voir le catalogue</Link>
             </div>
 
-            <div v-if="listings.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-5 gap-y-10 md:gap-x-8">
-                <BookCard v-for="l in listings" :key="l.id" :listing="l" />
+            <div v-if="listings.length" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div v-for="l in listings" :key="l.id"
+                     class="bg-white border border-gray-200 rounded-2xl p-4 flex gap-4 hover:border-brand-300 transition-colors">
+                    <Link :href="`/livres/${l.id}`" class="shrink-0">
+                        <img :src="cover(l)" @error="onCoverError($event, l)" :alt="l.title"
+                             class="w-16 h-24 object-cover rounded-md shadow-sm"
+                             :class="{ 'opacity-50 grayscale': l.status !== 'active' }">
+                    </Link>
+
+                    <div class="flex-1 min-w-0 flex flex-col">
+                        <div class="flex items-start gap-2">
+                            <Link :href="`/livres/${l.id}`" class="font-bold text-dark text-sm leading-snug line-clamp-2 hover:text-brand-600 flex-1">{{ l.title }}</Link>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0" :class="STATUS[l.status].class">{{ STATUS[l.status].label }}</span>
+                        </div>
+
+                        <p class="text-xs text-gray-500 mt-1">
+                            {{ priceLabel(l) }}
+                            <span v-if="l.quantity > 1" class="text-gray-400">· {{ l.quantity }} ex.</span>
+                            <span class="text-gray-400">· {{ l.views }} vues</span>
+                        </p>
+
+                        <div class="flex flex-wrap gap-1.5 mt-auto pt-3">
+                            <Link :href="`/livres/${l.id}/modifier`"
+                                  class="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
+                                <i class="fa-solid fa-pen text-[10px]"></i> Modifier
+                            </Link>
+                            <button v-if="l.type !== 'recherche'" @click="toggleStatus(l)"
+                                    class="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-bold transition-colors"
+                                    :class="l.status === 'active' ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'bg-green-50 text-green-700 hover:bg-green-100'">
+                                <i class="fa-solid text-[10px]" :class="l.status === 'active' ? 'fa-box-archive' : 'fa-rotate-left'"></i>
+                                {{ l.status === 'active' ? 'Marquer vendu' : 'Remettre en ligne' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div v-else class="bg-gray-50 border border-dashed border-gray-300 rounded-2xl py-16 text-center">

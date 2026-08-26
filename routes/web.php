@@ -35,6 +35,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/publier', [ListingController::class, 'create'])->name('listings.create');
     Route::post('/livres', [ListingController::class, 'store'])->name('listings.store');
 
+    // Gestion de ses propres annonces
+    Route::get('/livres/{listing}/modifier', [ListingController::class, 'edit'])->name('listings.edit');
+    Route::post('/livres/{listing}', [ListingController::class, 'update'])->name('listings.update');
+    Route::post('/livres/{listing}/statut', [ListingController::class, 'toggleStatus'])->name('listings.status');
+    Route::delete('/livres/{listing}', [ListingController::class, 'destroy'])->name('listings.destroy');
+
     Route::get('/favoris', [FavoriteController::class, 'index'])->name('favorites.index');
     Route::post('/favoris/{listing}', [FavoriteController::class, 'toggle'])->name('favorites.toggle');
 
@@ -125,4 +131,5 @@ if (app()->environment('local')) {
 }
 
 require __DIR__.'/auth.php';
+
 

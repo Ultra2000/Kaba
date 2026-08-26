@@ -8,6 +8,7 @@ use App\Notifications\KabaNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -149,6 +150,119 @@ class ListingController extends Controller
         $this->notifyFollowers($listing);
 
         return redirect()->route('listings.show', $listing)->with('success', 'Annonce publiée avec succès !');
+    }
+
+    /* ---------------- Gestion par le propriétaire ---------------- */
+
+    public function edit(Listing $listing): Response
+    {
+        $this->authorizeOwner($listing);
+        $listing->load('photos');
+
+        return Inertia::render('Listings/Edit', [
+            'listing'    => $listing,
+            'categories' => Category::orderBy('name')->get(['id', 'name']),
+            'cities'     => $this->cities(),
+            'conditions' => Listing::CONDITIONS,
+            'languages'  => $this->languages(),
+        ]);
+    }
+
+    public function update(Request $request, Listing $listing): RedirectResponse
+    {
+        $this->authorizeOwner($listing);
+
+        $data = $request->validate([
+            'type'        => 'required|in:vente,don,echange,recherche',
+            'title'       => 'required|string|max:255',
+            'author'      => 'nullable|string|max:255',
+            'isbn'        => 'nullable|string|max:20',
+            'category_id' => 'required|exists:categories,id',
+            'condition'   => 'required|in:comme_neuf,tres_bon,bon,moyen',
+            'language'    => 'required|string|max:50',
+            'city'        => 'required|string|max:100',
+            'description' => 'nullable|string|max:2000',
+            'price'       => 'nullable|integer|min:0|required_if:type,vente',
+            'wants'       => 'nullable|string|max:255',
+            'budget'      => 'nullable|integer|min:0',
+            'quantity'    => 'nullable|integer|min:1|max:999',
+            'photos'      => 'nullable|array|max:10',
+            'photos.*'    => 'image|max:5120',
+            'remove_photos'   => 'nullable|array',
+            'remove_photos.*' => 'integer',
+        ]);
+
+        $listing->update([
+            'category_id' => $data['category_id'],
+            'title'       => $data['title'],
+            'author'      => $data['author'] ?? null,
+            'isbn'        => $data['isbn'] ?? null,
+            'language'    => $data['language'],
+            'condition'   => $data['condition'],
+            'city'        => $data['city'],
+            'description' => $data['description'] ?? null,
+            'type'        => $data['type'],
+            'price'       => $data['type'] === 'vente' ? ($data['price'] ?? 0) : 0,
+            'wants'       => $data['type'] === 'echange' ? ($data['wants'] ?? null) : null,
+            'budget'      => $data['type'] === 'recherche' ? ($data['budget'] ?? null) : null,
+            'quantity'    => $data['quantity'] ?? $listing->quantity,
+        ]);
+
+        // Photos retirées par le vendeur (le fichier part avec).
+        if (! empty($data['remove_photos'])) {
+            foreach ($listing->photos()->whereIn('id', $data['remove_photos'])->get() as $photo) {
+                Storage::disk('public')->delete($photo->path);
+                $photo->delete();
+            }
+        }
+
+        // Nouvelles photos ajoutées, placées à la suite des existantes.
+        if ($request->hasFile('photos')) {
+            $optimizer = app(\App\Services\ImageOptimizer::class);
+            $position = (int) $listing->photos()->max('position') + 1;
+            foreach ($request->file('photos') as $file) {
+                $listing->photos()->create([
+                    'path'     => $optimizer->store($file),
+                    'position' => $position++,
+                ]);
+            }
+        }
+
+        return redirect()->route('listings.show', $listing)->with('success', 'Annonce mise à jour.');
+    }
+
+    /** Retire l'annonce du catalogue ou la remet en ligne. */
+    public function toggleStatus(Listing $listing): RedirectResponse
+    {
+        $this->authorizeOwner($listing);
+
+        // Une annonce marquée vendue redevient disponible avec au moins un exemplaire.
+        $listing->update($listing->status === 'active'
+            ? ['status' => 'sold']
+            : ['status' => 'active', 'quantity' => max(1, (int) $listing->quantity)]);
+
+        return back()->with('success', $listing->status === 'sold'
+            ? 'Annonce marquée comme vendue.'
+            : 'Annonce remise en ligne.');
+    }
+
+    public function destroy(Listing $listing): RedirectResponse
+    {
+        $this->authorizeOwner($listing);
+
+        foreach ($listing->photos as $photo) {
+            Storage::disk('public')->delete($photo->path);
+        }
+        $listing->delete();
+
+        return redirect()->route('dashboard')->with('success', 'Annonce supprimée.');
+    }
+
+    /** Seul l'auteur de l'annonce (ou un administrateur) peut la gérer. */
+    private function authorizeOwner(Listing $listing): void
+    {
+        $user = Auth::user();
+        abort_unless($user && ($listing->user_id === $user->id || $user->isAdmin()), 403);
     }
 
     /** Prévient les abonnés du vendeur qu'il vient de publier un livre. */

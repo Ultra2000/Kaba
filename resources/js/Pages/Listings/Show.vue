@@ -148,7 +148,12 @@ const initials = computed(() => (u.value?.name || '').split(/\s+/).map(w => w[0]
 
                     <!-- Actions -->
                     <div class="flex flex-col sm:flex-row gap-3 mb-6">
-                        <div v-if="listing.status === 'sold'" class="flex-1 bg-gray-100 text-gray-500 px-6 py-4 rounded-full font-bold flex items-center justify-center gap-2">
+                        <!-- Le vendeur gère son annonce depuis sa fiche -->
+                        <Link v-if="isOwner" :href="`/livres/${listing.id}/modifier`"
+                              class="flex-1 bg-dark hover:bg-gray-800 text-white px-6 py-4 rounded-full font-bold shadow-floating transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-pen"></i> Modifier mon annonce
+                        </Link>
+                        <div v-else-if="listing.status === 'sold'" class="flex-1 bg-gray-100 text-gray-500 px-6 py-4 rounded-full font-bold flex items-center justify-center gap-2">
                             <i class="fa-solid fa-circle-check"></i> {{ listing.type === 'don' ? 'Ce livre a déjà été donné' : 'Ce livre a été vendu' }}
                         </div>
                         <Link v-else-if="!isOwner && listing.type !== 'recherche' && inCart" href="/panier"
