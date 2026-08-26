@@ -57,9 +57,17 @@ const inputClass = 'w-full px-4 py-3 rounded-xl border border-gray-200 text-sm o
             </div>
 
             <div>
-                <label class="block text-sm font-bold text-dark mb-2">Bio</label>
-                <textarea v-model="form.bio" rows="3" :class="inputClass + ' resize-none'" placeholder="Présentez-vous en quelques mots..."></textarea>
-                <p v-if="form.errors.bio" class="text-red-500 text-xs mt-1">{{ form.errors.bio }}</p>
+                <label class="block text-sm font-bold text-dark mb-1">Présentation</label>
+                <p class="text-xs text-gray-500 mb-2">
+                    Affichée publiquement sur votre profil. Dites quels livres vous proposez,
+                    où vous préférez faire les remises — les acheteurs se décident plus vite.
+                </p>
+                <textarea v-model="form.bio" rows="3" maxlength="500" :class="inputClass + ' resize-none'"
+                          placeholder="Ex. : Étudiante en droit à Cotonou. Je revends mes manuels après chaque semestre, remise possible au campus ou à Ganhi."></textarea>
+                <div class="flex justify-between mt-1">
+                    <p v-if="form.errors.bio" class="text-red-500 text-xs">{{ form.errors.bio }}</p>
+                    <p class="text-xs text-gray-400 ml-auto">{{ (form.bio || '').length }}/500</p>
+                </div>
             </div>
 
             <div v-if="mustVerifyEmail && user.email_verified_at === null" class="bg-orange-50 border border-orange-200 rounded-xl p-3">

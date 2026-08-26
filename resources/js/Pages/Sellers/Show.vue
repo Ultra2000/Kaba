@@ -48,6 +48,9 @@ const stars = (n) => Array.from({ length: 5 }, (_, i) => i < n);
                             <span v-if="seller.role === 'pro'" class="font-bold text-dark"><i class="fa-solid fa-store text-brand-600"></i> Boutique · </span>
                             <i class="fa-solid fa-location-dot text-brand-600"></i> {{ seller.city || 'Bénin' }}
                         </p>
+                        <!-- Présentation écrite par le membre -->
+                        <p v-if="seller.bio" class="text-gray-700 leading-relaxed max-w-2xl mb-3 whitespace-pre-line">{{ seller.bio }}</p>
+
                         <div class="flex flex-wrap justify-center md:justify-start gap-2">
                             <span v-if="seller.is_verified" class="bg-white/70 text-brand-700 text-xs font-bold px-3 py-1.5 rounded-full"><i class="fa-solid fa-phone"></i> Vérifié</span>
                             <span class="bg-white/70 text-brand-700 text-xs font-bold px-3 py-1.5 rounded-full"><i class="fa-solid fa-star text-yellow-500"></i> {{ seller.rating_avg }} · {{ seller.reviews_count }} avis</span>
