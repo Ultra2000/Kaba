@@ -134,6 +134,65 @@ php artisan view:cache
 
 ---
 
+## 5 bis. Configurer l'envoi d'e-mails ⚠️ à ne pas sauter
+
+C'est le point qui fait échouer les lancements. Tant que `MAIL_MAILER=log`, **aucun
+e-mail ne part réellement** : un membre qui oublie son mot de passe est bloqué
+définitivement, et la confirmation d'adresse ne fonctionne pas.
+
+### Créer l'adresse d'envoi
+
+cPanel → **Comptes de messagerie** → créez `no-reply@votre-domaine.bj`.
+Notez le mot de passe : c'est lui qui va dans `MAIL_PASSWORD`.
+
+### Renseigner le `.env`
+
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=mail.votre-domaine.bj
+MAIL_PORT=465
+MAIL_ENCRYPTION=ssl
+MAIL_USERNAME=no-reply@votre-domaine.bj
+MAIL_PASSWORD=le-mot-de-passe-du-compte
+MAIL_FROM_ADDRESS=no-reply@votre-domaine.bj
+MAIL_FROM_NAME=KABA
+```
+
+Puis rechargez la configuration :
+
+```bash
+php artisan config:cache
+```
+
+### Vérifier que ça marche vraiment
+
+```bash
+php artisan kaba:mail-test votre@adresse-personnelle.com
+```
+
+La commande affiche la configuration lue, envoie un message, et détaille les
+causes probables en cas d'échec. **Vérifiez la réception** (y compris dans les
+indésirables) avant d'ouvrir le site.
+
+### Puis testez le parcours réel
+
+Depuis le site en ligne : « Mot de passe oublié » → vous devez recevoir un e-mail
+KABA en français, avec un bouton violet, et le lien doit fonctionner.
+
+### Éviter les indésirables
+
+| Point | Pourquoi |
+|---|---|
+| `MAIL_FROM_ADDRESS` sur **votre** domaine | Une adresse `@gmail.com` en expéditeur est rejetée ou classée indésirable |
+| Enregistrement **SPF** dans le DNS | Autorise votre serveur à envoyer pour votre domaine |
+| Enregistrement **DKIM** | Signe vos messages (activable en un clic dans cPanel) |
+
+> 💡 Si la délivrabilité reste mauvaise avec le SMTP de l'hébergeur, basculez sur
+> **Brevo** (offre gratuite d'environ 300 e-mails par jour) : il suffit de changer
+> les quatre lignes `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`.
+
+---
+
 ## 6. Droits sur les dossiers
 
 Ces deux dossiers doivent être **inscriptibles** par le serveur web :

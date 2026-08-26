@@ -103,4 +103,20 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('/categories/{category:id}', [\App\Http\Controllers\Admin\AdminController::class, 'destroyCategory'])->name('categories.destroy');
 });
 
+// Aperçu des e-mails transactionnels, en développement uniquement.
+// Permet de vérifier leur rendu sans configurer d'envoi.
+if (app()->environment('local')) {
+    Route::get('/dev/emails/{type}', function (string $type) {
+        $user = \App\Models\User::first() ?? new \App\Models\User(['name' => 'Aïcha K.', 'email' => 'test@kaba.bj']);
+
+        $notification = match ($type) {
+            'reset'  => new \Illuminate\Auth\Notifications\ResetPassword('jeton-de-demonstration'),
+            'verify' => new \Illuminate\Auth\Notifications\VerifyEmail(),
+            default  => abort(404),
+        };
+
+        return $notification->toMail($user)->render();
+    })->name('dev.emails');
+}
+
 require __DIR__.'/auth.php';
