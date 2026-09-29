@@ -296,6 +296,14 @@ class ListingController extends Controller
             return;
         }
 
+        // Le rapprochement se fait sur les titres normalisés : une recherche
+        // « L'Étranger » doit reconnaître une annonce saisie « l etranger ».
+        $published = Listing::normalizeSearch($listing->title);
+
+        if ($published === '') {
+            return;
+        }
+
         $searches = Listing::with('user')
             ->where('type', 'recherche')
             ->where('status', 'active')
@@ -303,8 +311,10 @@ class ListingController extends Controller
             ->get();
 
         foreach ($searches as $search) {
-            if (stripos($listing->title, $search->title) !== false
-                || stripos($search->title, $listing->title) !== false) {
+            $wanted = Listing::normalizeSearch($search->title);
+
+            if ($wanted !== ''
+                && (str_contains($published, $wanted) || str_contains($wanted, $published))) {
                 $search->user->notify(new KabaNotification([
                     'kind'    => 'recherche',
                     'icon'    => 'fa-magnifying-glass',

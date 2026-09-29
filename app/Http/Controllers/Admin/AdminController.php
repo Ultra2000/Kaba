@@ -166,10 +166,14 @@ class AdminController extends Controller
         ];
 
         $listings = Listing::with(['user:id,name', 'category:id,name'])
-            ->when($filters['q'], fn ($q, $v) => $q->where(fn ($w) => $w
-                ->where('title', 'like', "%{$v}%")
-                ->orWhere('author', 'like', "%{$v}%")
-                ->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$v}%"))))
+            // Même normalisation que le catalogue public : la recherche de
+            // l'administrateur ne doit pas dépendre des accents saisis.
+            ->when(Listing::searchNeedles($filters['q']), fn ($q, $needles) => $q->where(function ($w) use ($needles, $filters) {
+                foreach ($needles as $needle) {
+                    $w->orWhere('search_text', 'like', "%{$needle}%");
+                }
+                $w->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$filters['q']}%"));
+            }))
             ->when($filters['status'] !== 'all', fn ($q) => $q->where('status', $filters['status']))
             ->when($filters['type'] !== 'all', fn ($q) => $q->where('type', $filters['type']))
             ->latest()
