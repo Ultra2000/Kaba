@@ -39,14 +39,14 @@ class CartController extends Controller
         abort_if($listing->status !== 'active', 404);
         abort_if($listing->type === 'recherche', 422, 'Une recherche ne peut pas être ajoutée au panier.');
 
-        $request->user()->cartListings()->syncWithoutDetaching([$listing->id]);
+        $request->user()->addToCart($listing->id);
 
         return back()->with('success', 'Ajouté au panier.');
     }
 
     public function remove(Request $request, Listing $listing): RedirectResponse
     {
-        $request->user()->cartListings()->detach($listing->id);
+        $request->user()->removeFromCart($listing->id);
 
         return back()->with('success', 'Retiré du panier.');
     }

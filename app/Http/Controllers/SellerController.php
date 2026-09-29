@@ -70,7 +70,7 @@ class SellerController extends Controller
     public function follow(User $user): RedirectResponse
     {
         abort_if(Auth::id() === $user->id, 403);
-        Auth::user()->following()->toggle($user->id);
+        Auth::user()->toggleFollow($user->id);
 
         return back();
     }

@@ -74,7 +74,7 @@ class OrderController extends Controller
         }
 
         // Les livres demandés sortent du panier.
-        $request->user()->cartListings()->detach($listings->pluck('id'));
+        $request->user()->removeFromCart($listings->pluck('id'));
 
         $count = $listings->count();
         $hasOffers = $order->items()->whereNotNull('offered_price')->exists();

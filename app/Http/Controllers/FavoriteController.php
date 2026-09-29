@@ -27,7 +27,7 @@ class FavoriteController extends Controller
 
     public function toggle(Listing $listing): RedirectResponse
     {
-        Auth::user()->favoriteListings()->toggle($listing->id);
+        Auth::user()->toggleFavorite($listing->id);
 
         return back();
     }

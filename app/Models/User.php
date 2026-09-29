@@ -9,6 +9,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
@@ -81,10 +83,7 @@ class User extends Authenticatable
 
     public function unreadMessagesCount(): int
     {
-        return Message::whereHas('conversation', fn ($q) => $q->where('buyer_id', $this->id)->orWhere('seller_id', $this->id))
-            ->where('sender_id', '!=', $this->id)
-            ->whereNull('read_at')
-            ->count();
+        return $this->unreadMessagesQuery()->count();
     }
 
     /** Livres mis au panier (via cart_items). */
@@ -102,6 +101,111 @@ class User extends Authenticatable
     public function ordersReceived()
     {
         return $this->hasMany(Order::class, 'seller_id');
+    }
+
+    /* ---------- État d'interaction partagé à chaque page ---------- */
+
+    /**
+     * Identifiants qui donnent leur état aux boutons présents sur toutes les pages :
+     * cœur rempli, « déjà au panier », « vendeur suivi ».
+     *
+     * Ces trois listes étaient relues à chaque chargement de page. Elles ne changent
+     * que par les méthodes de mutation ci-dessous, qui invalident le cache : la
+     * durée de vie n'est qu'un filet de sécurité, pas le mécanisme de fraîcheur.
+     */
+    public function interactionIds(): array
+    {
+        return Cache::remember($this->interactionCacheKey(), 300, fn () => [
+            'favorites' => $this->favoriteListings()->pluck('listings.id')->all(),
+            'cart'      => $this->cartListings()->pluck('listings.id')->all(),
+            'following' => $this->following()->pluck('users.id')->all(),
+        ]);
+    }
+
+    public function forgetInteractionIds(): void
+    {
+        Cache::forget($this->interactionCacheKey());
+    }
+
+    private function interactionCacheKey(): string
+    {
+        return "user.{$this->id}.interactions";
+    }
+
+    /**
+     * Les mutations passent par ces méthodes plutôt que par les relations
+     * directement : impossible de modifier une de ces listes sans vider le cache.
+     */
+    public function toggleFavorite(int $listingId): void
+    {
+        $this->favoriteListings()->toggle($listingId);
+        $this->forgetInteractionIds();
+    }
+
+    public function addToCart(int $listingId): void
+    {
+        $this->cartListings()->syncWithoutDetaching([$listingId]);
+        $this->forgetInteractionIds();
+    }
+
+    public function removeFromCart(mixed $listingIds): void
+    {
+        $this->cartListings()->detach($listingIds);
+        $this->forgetInteractionIds();
+    }
+
+    public function toggleFollow(int $sellerId): void
+    {
+        $this->following()->toggle($sellerId);
+        $this->forgetInteractionIds();
+    }
+
+    /**
+     * Compteurs des badges de l'en-tête, obtenus en une seule requête.
+     *
+     * Volontairement jamais mis en cache : un badge en retard ferait manquer un
+     * message ou une demande de disponibilité. Les clés de modération ne sont
+     * présentes que pour un administrateur.
+     */
+    public function badgeCounts(): array
+    {
+        $counters = [
+            'unread' => DB::table('notifications')
+                ->selectRaw('count(*)')
+                ->where('notifiable_type', $this->getMorphClass())
+                ->where('notifiable_id', $this->id)
+                ->whereNull('read_at'),
+            'unreadMessages' => $this->unreadMessagesQuery()->selectRaw('count(*)'),
+            'pendingOrders'  => DB::table('orders')
+                ->selectRaw('count(*)')
+                ->where('seller_id', $this->id)
+                ->where('status', 'pending'),
+        ];
+
+        if ($this->isAdmin()) {
+            $counters['reports'] = DB::table('reports')
+                ->selectRaw('count(*)')->where('status', 'open');
+            $counters['pendingListings'] = DB::table('listings')
+                ->selectRaw('count(*)')->where('status', 'pending');
+        }
+
+        $query = DB::query();
+        foreach ($counters as $alias => $sub) {
+            $query->selectSub($sub, $alias);
+        }
+
+        return array_map('intval', (array) $query->first());
+    }
+
+    /** Messages non lus reçus par ce membre, tous fils de discussion confondus. */
+    private function unreadMessagesQuery(): \Illuminate\Database\Query\Builder
+    {
+        return DB::table('messages')
+            ->join('conversations', 'conversations.id', '=', 'messages.conversation_id')
+            ->where(fn ($q) => $q->where('conversations.buyer_id', $this->id)
+                ->orWhere('conversations.seller_id', $this->id))
+            ->where('messages.sender_id', '!=', $this->id)
+            ->whereNull('messages.read_at');
     }
 
     /** Statuts d'un membre, du plus courant au plus élevé. */

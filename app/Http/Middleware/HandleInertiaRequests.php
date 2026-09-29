@@ -31,38 +31,33 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
+        // Deux accès en tout pour un visiteur connecté : une lecture de cache pour
+        // les listes d'interaction, une requête pour tous les compteurs de badges.
+        $interactions = $user?->interactionIds() ?? [];
+        $counts       = $user?->badgeCounts() ?? [];
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user'      => $request->user(),
-                'favorites' => $request->user()
-                    ? $request->user()->favoriteListings()->pluck('listings.id')
-                    : [],
-                'following' => $request->user()
-                    ? $request->user()->following()->pluck('users.id')
-                    : [],
-                'unread' => $request->user()
-                    ? $request->user()->unreadNotifications()->count()
-                    : 0,
-                'unreadMessages' => $request->user()
-                    ? $request->user()->unreadMessagesCount()
-                    : 0,
-                'cart' => $request->user()
-                    ? $request->user()->cartListings()->pluck('listings.id')
-                    : [],
+                'user'      => $user,
+                'favorites' => $interactions['favorites'] ?? [],
+                'following' => $interactions['following'] ?? [],
+                'cart'      => $interactions['cart'] ?? [],
+                'unread'         => $counts['unread'] ?? 0,
+                'unreadMessages' => $counts['unreadMessages'] ?? 0,
                 // Demandes reçues en attente de réponse (indicateur pour le vendeur).
-                'pendingOrders' => $request->user()
-                    ? $request->user()->ordersReceived()->where('status', 'pending')->count()
-                    : 0,
+                'pendingOrders'  => $counts['pendingOrders'] ?? 0,
             ],
             // Messages de confirmation après une action (back()->with('success', …)).
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
             ],
             // Compteurs affichés dans le menu de l'administration.
-            'admin' => $request->user()?->isAdmin() ? [
-                'reports'         => \App\Models\Report::where('status', 'open')->count(),
-                'pendingListings' => \App\Models\Listing::where('status', 'pending')->count(),
+            'admin' => $user?->isAdmin() ? [
+                'reports'         => $counts['reports'] ?? 0,
+                'pendingListings' => $counts['pendingListings'] ?? 0,
             ] : null,
             'nav' => [
                 'categories' => Cache::remember('nav.categories', 3600, fn () =>
