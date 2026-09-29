@@ -45,6 +45,15 @@ const priceLabel = computed(() => {
                         group-hover:shadow-[0_16px_32px_-8px_rgba(0,0,0,0.45)]
                         group-hover:-translate-y-1 transition-all duration-300">
 
+            <!-- Vendeur vérifié : le repère qui accompagne la mise en avant.
+                 Absent si la relation n'a pas été chargée, plutôt qu'affiché à tort. -->
+            <span v-if="listing.user?.is_verified"
+                  class="absolute top-2 left-2 inline-flex items-center gap-1 h-6 px-2 rounded-full
+                         bg-white/95 backdrop-blur-sm shadow-sm text-[10px] font-bold text-brand-700"
+                  title="Vendeur vérifié">
+                <i class="fa-solid fa-circle-check text-brand-600 text-[11px]"></i> Vérifié
+            </span>
+
             <!-- Favori (apparaît au survol) -->
             <button type="button" @click.prevent.stop="toggleFav"
                     class="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/95 shadow-sm flex items-center justify-center transition-all"

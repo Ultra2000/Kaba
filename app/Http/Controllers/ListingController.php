@@ -27,7 +27,8 @@ class ListingController extends Controller
             'sort'      => $request->input('sort', 'popular'),
         ];
 
-        $listings = Listing::with(['user:id,name', 'category:id,name,slug', 'photos'])
+        $listings = Listing::with(['user:id,name,is_verified', 'category:id,name,slug', 'photos'])
+            ->withPromoted()
             ->where('status', 'active')
             ->filter($filters)
             ->sort($filters['sort'])

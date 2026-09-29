@@ -75,8 +75,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/messagerie/{conversation}', [\App\Http\Controllers\ConversationController::class, 'storeMessage'])->name('messages.store');
 });
 
+// Pas de middleware « verified » : confirmer son adresse est volontaire et ne
+// conditionne que le badge, jamais l'accès. Un vendeur publie dès l'inscription.
 Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
+    ->middleware('auth')
     ->name('dashboard');
 
 Route::middleware('auth')->group(function () {

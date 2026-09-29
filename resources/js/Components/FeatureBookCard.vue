@@ -54,6 +54,14 @@ const priceLabel = (() => {
             <div class="absolute top-3 left-3 z-20 w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm shadow-lg" :class="a.badge">
                 <i class="fa-solid" :class="a.icon"></i>
             </div>
+
+            <!-- Vendeur vérifié — à droite, le coin gauche portant déjà l'accent. -->
+            <span v-if="listing.user?.is_verified"
+                  class="absolute top-3 right-3 z-20 inline-flex items-center gap-1 h-7 px-2.5 rounded-full
+                         bg-white/95 backdrop-blur-sm shadow-lg text-[10px] font-bold text-brand-700"
+                  title="Vendeur vérifié">
+                <i class="fa-solid fa-circle-check text-brand-600 text-[11px]"></i> Vérifié
+            </span>
         </div>
 
         <!-- Panneau texte -->

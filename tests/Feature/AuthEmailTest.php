@@ -47,10 +47,16 @@ class AuthEmailTest extends TestCase
 
         $mail = (new VerifyEmail())->toMail($user);
 
-        $this->assertSame('Confirmez votre adresse e-mail — KABA', $mail->subject);
+        $this->assertSame('Obtenez le badge « Vérifié » — KABA', $mail->subject);
         $this->assertSame('Confirmer mon adresse', $mail->actionText);
         $this->assertStringContainsString('Bienvenue sur KABA', $mail->greeting);
         $this->assertStringNotContainsString('Verify Email Address', $mail->render());
+
+        // Confirmer son adresse ne débloque rien : l'e-mail propose le badge et
+        // doit rassurer, pas laisser croire que le compte attend une activation.
+        $rendered = $mail->render();
+        $this->assertStringContainsString('Votre compte est déjà actif', $rendered);
+        $this->assertStringNotContainsString('activer votre compte', $rendered);
     }
 
     public function test_forgotten_password_request_sends_the_email(): void

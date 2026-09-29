@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import PublicLayout from '@/Layouts/PublicLayout.vue';
 
@@ -8,6 +9,19 @@ defineProps({
 });
 
 const user = usePage().props.auth.user;
+
+// Confirmer son adresse ne débloque rien : ça donne le badge et la mise en avant.
+// Sans cette invitation, personne ne saurait que la possibilité existe.
+const sent = ref(false);
+const sending = ref(false);
+function resendVerification() {
+    sending.value = true;
+    router.post('/email/verification-notification', {}, {
+        preserveScroll: true,
+        onSuccess: () => { sent.value = true; },
+        onFinish: () => { sending.value = false; },
+    });
+}
 const fmt = (n) => new Intl.NumberFormat('fr-FR').format(n);
 
 const STATUS = {
@@ -44,6 +58,31 @@ const toggleStatus = (l) => router.post(`/livres/${l.id}/statut`, {}, { preserve
                 <Link href="/publier" class="inline-flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-full font-bold shadow-floating transition-all active:scale-95">
                     <i class="fa-solid fa-plus text-xs"></i> Publier une annonce
                 </Link>
+            </div>
+
+            <!-- Badge « Vérifié » : une proposition, pas un blocage -->
+            <div v-if="!user.email_verified_at"
+                 class="mb-8 rounded-2xl border border-brand-200 bg-brand-50 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+                <div class="w-11 h-11 rounded-xl bg-brand-600 text-white flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="font-bold text-dark">Obtenez le badge « Vérifié »</p>
+                    <p v-if="!sent" class="text-sm text-gray-600 mt-0.5">
+                        Confirmez votre adresse e-mail : le badge s'affiche sur vos annonces et fait remonter vos
+                        <strong>ventes</strong> dans le catalogue. Vos dons et échanges, eux, sont déjà mis en avant.
+                    </p>
+                    <p v-else class="text-sm text-green-700 font-semibold mt-0.5">
+                        <i class="fa-solid fa-paper-plane mr-1"></i>
+                        Lien envoyé à {{ user.email }}. Pensez à regarder vos indésirables.
+                    </p>
+                </div>
+                <button v-if="!sent" type="button" @click="resendVerification" :disabled="sending"
+                        class="shrink-0 inline-flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700
+                               disabled:opacity-60 text-white px-5 py-2.5 rounded-full font-bold text-sm transition-all active:scale-95">
+                    <i class="fa-solid" :class="sending ? 'fa-spinner fa-spin' : 'fa-envelope'"></i>
+                    {{ sending ? 'Envoi…' : 'Recevoir le lien' }}
+                </button>
             </div>
 
             <!-- Stats -->

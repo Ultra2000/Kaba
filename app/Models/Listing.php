@@ -49,6 +49,9 @@ class Listing extends Model
     protected $hidden = ['search_text'];
 
     protected $casts = [
+        // Colonne calculée par scopeWithPromoted, absente des requêtes qui ne
+        // l'ajoutent pas : Eloquent ne convertit que ce qui est présent.
+        'is_promoted' => 'boolean',
         'price'     => 'integer',
         'old_price' => 'integer',
         'budget'   => 'integer',
@@ -156,12 +159,45 @@ class Listing extends Model
                 $q->where(fn ($w) => $w->where('type', '!=', 'vente')->orWhere('price', '<=', $v)));
     }
 
+    /* ---------- Mise en avant ---------- */
+
+    /**
+     * Une annonce est mise en avant si elle ne demande pas d'argent — don ou
+     * échange, l'esprit solidaire de KABA — ou si son vendeur porte le badge
+     * « Vérifié », qu'il obtient en confirmant son adresse e-mail.
+     *
+     * L'expression vit ici et nulle part ailleurs : le tri et la colonne
+     * envoyée au front doivent toujours dire la même chose.
+     */
+    private static function promotedExpression(): string
+    {
+        return "(case
+            when listings.type in ('don', 'echange') then 1
+            when exists (
+                select 1 from users
+                where users.id = listings.user_id and users.is_verified = 1
+            ) then 1
+            else 0 end)";
+    }
+
+    /** Ajoute la colonne is_promoted, que les cartes utilisent pour leur repère. */
+    public function scopeWithPromoted(Builder $query): Builder
+    {
+        return $query
+            ->select('listings.*')
+            ->selectRaw(static::promotedExpression() . ' as is_promoted');
+    }
+
     public function scopeSort(Builder $query, ?string $sort): Builder
     {
         return match ($sort) {
+            // Un tri par prix est un choix explicite du visiteur : on le respecte
+            // tel quel, sans remonter quoi que ce soit par-dessus.
             'price-asc'  => $query->orderBy('price'),
             'price-desc' => $query->orderByDesc('price'),
-            default      => $query->orderByDesc('views'),
+            default      => $query
+                ->orderByRaw(static::promotedExpression() . ' desc')
+                ->orderByDesc('views'),
         };
     }
 }

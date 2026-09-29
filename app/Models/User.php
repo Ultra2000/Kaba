@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -12,7 +12,11 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
-class User extends Authenticatable
+/**
+ * La confirmation de l'adresse e-mail est volontaire : elle ne bloque rien, mais
+ * elle donne le badge « Vérifié », qui met les ventes du membre en avant.
+ */
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
